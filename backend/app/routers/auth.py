@@ -1,28 +1,21 @@
 from fastapi import APIRouter
+from app.services import auth
+from app.types.auth import LoginRequest, SignupRequest
 
 router = APIRouter()
 
-
 @router.get("/me")
 def get_me():
-    return {
-        "id": 1,
-        "username": "matt",
-        "email": "matt@example.com",
-        "is_active": True,
-        "permissions": ["users.view", "users.edit"],
-    }
-
+	return auth.get_me();
 
 @router.post("/login")
-def login():
-    return {
-        "message": "Login endpoint placeholder"
-    }
+async def login(data: LoginRequest):
+    return await auth.login(data)
 
+@router.post("/signup")
+async def signup(data: SignupRequest):
+    return await auth.signup(data)
 
 @router.post("/logout")
 def logout():
-    return {
-        "message": "Logout endpoint placeholder"
-    }
+    return auth.logout()

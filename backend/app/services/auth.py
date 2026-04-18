@@ -1,0 +1,65 @@
+from passlib.context import CryptContext
+from app.types.auth import LoginRequest, SignupRequest
+from app.tables.Users import Users
+from app.classes.apiresponse import APIResponse
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(password, hashed_password)
+
+async def login(data: LoginRequest):
+
+	user = await Users.findByUserID(data.user_id)
+
+	if not user:
+		return APIResponse.unauthorized("Invalid credentials")
+	
+	if not user.is_enabled:
+		return APIResponse.unauthorized("Account is not enabled")
+
+	if not verify_password(data.password, user.password):
+		return APIResponse.unauthorized("Invalid credentials")
+
+	return APIResponse.ok("You have successfully logged in")
+
+async def signup(data: SignupRequest):
+
+	user = await Users.findByEmail(data.email)
+
+	if user:
+		APIResponse.bad_request("Email already Exists")
+	
+	user = await Users.findByUserID(data.user_id)
+
+	if user:
+		APIResponse.bad_request("UserID already Exists")
+
+	hashed_password = hash_password(data.password)
+
+	# signup user
+	user = Users(
+		email=data.email,
+		user_id=data.user_id,
+		password=hashed_password,
+	)
+
+	await user.insert()
+
+	return APIResponse.ok("You are now signed up, please review your email for next steps")
+
+def logout():
+
+	return APIResponse.ok("You have logged out successfully")
+
+def get_me():
+    return APIResponse.ok("You are now signed up, please review your email for next steps", {
+        "id": 1,
+        "username": "matt",
+        "email": "matt@example.com",
+        "is_active": True,
+        "permissions": ["users.view", "users.edit"],
+    })
