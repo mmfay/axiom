@@ -1,6 +1,8 @@
 from passlib.context import CryptContext
 from app.types.auth import LoginRequest, SignupRequest
 from app.tables.Users import Users
+from app.tables.Tenants import Tenants
+from app.tables.Entities import Entities
 from app.classes.apiresponse import APIResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -13,18 +15,21 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 async def login(data: LoginRequest):
 
-	user = await Users.findByUserID(data.user_id)
+	user = await Users.findByEmail(data.email)
 
 	if not user:
+		print("user doesnt exist")
 		return APIResponse.unauthorized("Invalid credentials")
 	
 	if not user.is_enabled:
+		print("user not enabled")
 		return APIResponse.unauthorized("Account is not enabled")
 
 	if not verify_password(data.password, user.password):
+		print("password incorrect")
 		return APIResponse.unauthorized("Invalid credentials")
 
-	return APIResponse.ok("You have successfully logged in")
+	return user
 
 async def signup(data: SignupRequest):
 
@@ -38,6 +43,28 @@ async def signup(data: SignupRequest):
 	if user:
 		APIResponse.bad_request("UserID already Exists")
 
+	tenant = Tenants(
+		name = "your tenant name",
+		email = data.email
+	)
+
+	tenant = await tenant.insert()
+
+	if not tenant.id:
+		print("Tenant Creation Error")
+		APIResponse.internal_error("Error occurred during creation process, please try again.")
+
+	initEntity = Entities(
+		name = "your company name",
+		tenant_id = tenant.id
+	)
+
+	initEntity = await initEntity.insert()
+
+	if not tenant.id:
+		print("Entity Creation Error")
+		APIResponse.internal_error("Error occurred during creation process, please try again.")
+
 	hashed_password = hash_password(data.password)
 
 	# signup user
@@ -45,6 +72,8 @@ async def signup(data: SignupRequest):
 		email=data.email,
 		user_id=data.user_id,
 		password=hashed_password,
+		tenant_id=tenant.id,
+		default_company_id=initEntity.id
 	)
 
 	await user.insert()
@@ -55,11 +84,11 @@ def logout():
 
 	return APIResponse.ok("You have logged out successfully")
 
-def get_me():
+async def get_me():
     return APIResponse.ok("You are now signed up, please review your email for next steps", {
         "id": 1,
-        "username": "matt",
-        "email": "matt@example.com",
-        "is_active": True,
+        "user_id": "matt",
+        "email": "admin@example.com",
+        "is_enabled": True,
         "permissions": ["users.view", "users.edit"],
     })
