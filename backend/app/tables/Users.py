@@ -1,5 +1,5 @@
 from app.tables.Common import Common
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
 
@@ -14,6 +14,8 @@ class Users(Common):
 	user_id: Optional[str] = None
 	password: Optional[str] = None
 	is_enabled: Optional[bool] = None
+	tenant_id: Optional[int] = None
+	default_company_id: Optional[int] = None
 
 	# table name
 	table_name = "users"
@@ -25,7 +27,9 @@ class Users(Common):
 		email: Optional[str] = None,
 		user_id: Optional[str] = None,
 		password: Optional[str] = None,
-		is_enabled: Optional[str] = None,
+		is_enabled: Optional[bool] = None,
+		tenant_id: Optional[int] = None,
+		default_company_id: Optional[int] = None,
 		connection=None,
 	):
 		super().__init__(connection)
@@ -35,6 +39,8 @@ class Users(Common):
 		self.user_id = user_id
 		self.password = password
 		self.is_enabled = is_enabled
+		self.tenant_id = tenant_id
+		self.default_company_id = default_company_id
 
 	#
 	async def insert(self) -> "Users":
@@ -44,13 +50,13 @@ class Users(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("email, password, user_id")
-            		.values("$1, $2, $3")
+					.fields("email, password, user_id, tenant_id, default_company_id")
+            		.values("$1, $2, $3, $4, $5")
 					.returning()
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.email, self.password, self.user_id)
+		row = await self.fetch_one(sql, self.email, self.password, self.user_id, self.tenant_id, self.default_company_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -71,9 +77,7 @@ class Users(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.values(email="$1")
-					.values(password="$2")
-					.values(version_id="$3 + 1")
+					.set("email=$1, password=$2, version_id=$3+1")
 					.where("id = $4 AND version_id = $3")
 					.returning()
 				.getQuery()
