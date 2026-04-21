@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Request
 from jose import jwt, JWTError
 
 from app.services.config import settings
