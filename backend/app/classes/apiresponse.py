@@ -3,40 +3,36 @@ from typing import Any, Optional
 
 from app.classes.appexception import AppException
 
+
 class APIResponse:
 
-	# Handles success messages back to the client
+	@staticmethod
+	def _build(
+		ok: bool,
+		message: str,
+		status_code: int,
+		data: Optional[Any] = None
+	) -> JSONResponse:
+		return JSONResponse(
+			status_code=status_code,
+			content={
+				"ok": ok,
+				"message": message,
+				"data": data,
+				"status": status_code,
+				"statusText": "OK" if ok else "Error",
+			},
+		)
+
+	# ✅ success responses
 	@staticmethod
 	def success(
 		message: str = "Success",
 		data: Optional[Any] = None,
 		status_code: int = 200
 	) -> JSONResponse:
-		return JSONResponse(
-			status_code=status_code,
-			content={
-				"success": True,
-				"message": message,
-				"data": data
-			}
-		)
+		return APIResponse._build(True, message, status_code, data)
 
-	#Handles error messages back to the client
-	@staticmethod
-	def error(
-		message: str = "Error",
-		status_code: int = 400,
-		data: Optional[Any] = None
-	) -> JSONResponse:
-		return JSONResponse(
-			status_code=status_code,
-			content={
-				"success": False,
-				"message": message,
-				"data": data
-			}
-		)
-	
 	@staticmethod
 	def ok(message: str = "Success", data: Optional[Any] = None) -> JSONResponse:
 		return APIResponse.success(message, data, 200)
@@ -45,6 +41,16 @@ class APIResponse:
 	def created(message: str = "Created", data: Optional[Any] = None) -> JSONResponse:
 		return APIResponse.success(message, data, 201)
 
+	# ✅ error responses (direct)
+	@staticmethod
+	def error(
+		message: str = "Error",
+		status_code: int = 400,
+		data: Optional[Any] = None
+	) -> JSONResponse:
+		return APIResponse._build(False, message, status_code, data)
+
+	# ✅ exception-based errors (preferred)
 	@staticmethod
 	def bad_request(message: str = "Bad Request", data: Optional[Any] = None):
 		raise AppException(400, message, data)
@@ -60,3 +66,7 @@ class APIResponse:
 	@staticmethod
 	def not_found(message: str = "Not Found", data: Optional[Any] = None):
 		raise AppException(404, message, data)
+
+	@staticmethod
+	def internal_error(message: str = "Internal Server Error", data: Optional[Any] = None):
+		raise AppException(500, message, data)
