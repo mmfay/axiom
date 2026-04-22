@@ -1,4 +1,5 @@
-import { ApiResult } from "../types/data";
+import { API_BASE_URL } from "../config";
+import { APIResult } from "../types/data";
 
 // shared fetch helper, can be used for most posts.
 export async function postJSON<
@@ -6,10 +7,10 @@ export async function postJSON<
 	TBody extends object = Record<string, unknown>
 >(
 	url: string, 
-	body: TBody
-): Promise<ApiResult<TData>> {
+	body?: TBody
+): Promise<APIResult<TData>> {
 
-	const res = await fetch(url, {
+	const res = await fetch(`${API_BASE_URL}${url}`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		credentials: "include",
@@ -31,7 +32,7 @@ export async function getJSON<
 >(
 	url: string,
 	params?: TParams
-): Promise<ApiResult<TData>> {
+): Promise<APIResult<TData>> {
 	// Build URL with query params
 	let fullUrl = url;
 
@@ -51,7 +52,7 @@ export async function getJSON<
 		fullUrl += (url.includes("?") ? "&" : "?") + qs.toString();
 	}
 
-	const res = await fetch(fullUrl, {
+	const res = await fetch(`${API_BASE_URL}${url}`, {
 		method: "GET",
 		credentials: "include",
 		headers: { Accept: "application/json" },
@@ -71,7 +72,7 @@ export async function deleteJSON<
 >(
 	url: string,
 	params?: TParams
-): Promise<ApiResult<TData>> {
+): Promise<APIResult<TData>> {
 
 	// Build URL with query params
 	let fullUrl = url;
@@ -108,7 +109,7 @@ export async function deleteJSON<
 	// If your API returns the ApiResult envelope, just return it.
 	// Otherwise, wrap it.
 	if (isJSON && payload && typeof payload === "object" && "ok" in payload) {
-		const env = payload as ApiResult<TData>;
+		const env = payload as APIResult<TData>;
 		return {
 			...env,
 			status: env.status ?? res.status,
@@ -127,7 +128,7 @@ export async function patchJSON<
 >(
 	url: string,
 	body?: TBody
-): Promise<ApiResult<TData>> {
+): Promise<APIResult<TData>> {
 
 	const res = await fetch(url, {
 		method: "PATCH",

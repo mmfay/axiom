@@ -1,4 +1,4 @@
-export type ApiResult<T> = { 
+export type APIResult<T> = { 
 	ok: boolean; 
 	message: string; 
 	data?: T; 
