@@ -1,9 +1,8 @@
 from passlib.context import CryptContext
-from app.types.auth import LoginRequest, SignupRequest
-from app.tables.Users import Users
-from app.tables.Tenants import Tenants
-from app.tables.Entities import Entities
-from app.classes.apiresponse import APIResponse
+from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword
+from app.tables import Users, Tenants, Entities, Tokens
+from app.classes import APIResponse
+from app.services.mailer import mailer
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -83,6 +82,34 @@ async def signup(data: SignupRequest):
 def logout():
 
 	return APIResponse.ok("You have logged out successfully")
+
+async def forgotPassword(data: UserEmail):
+		
+	await mailer.send_reset_password_email(
+		to_email=data.email
+	)
+
+	return APIResponse.ok()
+
+async def resetPassword(data: ResetPassword):
+
+	token = await Tokens.findByToken(data.token)
+
+	if not token:
+		print("no token found")
+		return APIResponse.bad_request("Token expired or doesn't exist")
+	
+	user = await Users.find(token.user_id)
+
+	if not user:
+		print("no user found")
+		return APIResponse.bad_request("Token may be corrupt, please go through forgot password steps again")
+	
+	user.password = hash_password(data.password)
+
+	user = await user.update()
+	
+	return APIResponse.ok()
 
 async def get_me():
     return APIResponse.ok("You are now signed up, please review your email for next steps", {
