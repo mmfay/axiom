@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, signup, logout, forgotPassword, resetPassword, me } from "../lib/api/auth";
+import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me } from "../lib/api/auth";
 
 export type AuthUser = {
 	id: string;
@@ -24,6 +24,7 @@ export type AuthContextValue = AuthState & {
 	handleLogout: () => Promise<void>;
 	handleForgotPassword: (email: string) => Promise<void>;
 	handleResetPassword: (newPassword: string, token: string) => Promise<void>;
+	handleVerifyAccount: (token: string) => Promise<void>;
 	refresh: () => Promise<void>;
 
 };
@@ -183,8 +184,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		
 	};
 
-	const value: AuthContextValue = useMemo(
-		() => ({ isAuth, user, error, loading, handleLogin, handleSignup, handleLogout, handleForgotPassword, handleResetPassword, refresh }),
+	// verify account
+	const handleVerifyAccount = async (token: string) => {
+		
+		setLoading(true);
+
+		try {
+
+			const res = await verifyAccount({ token })
+
+			if (!res.ok) {
+				alert("hey");
+				return;
+			}
+
+			router.push("/login");
+
+		} finally {
+
+			setLoading(false);
+
+		}
+		
+	};
+
+	const value: AuthContextValue = useMemo(() => (
+		{ 
+			isAuth, 
+			user, 
+			error, 
+			loading, 
+			handleLogin, 
+			handleSignup, 
+			handleLogout, 
+			handleForgotPassword, 
+			handleResetPassword, 
+			handleVerifyAccount,
+			refresh 
+		}),
 		[isAuth, user, error, loading]
 	);
 
