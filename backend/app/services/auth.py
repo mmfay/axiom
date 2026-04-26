@@ -1,10 +1,9 @@
-import hashlib
-
 from passlib.context import CryptContext
 from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
 from app.tables import Users, Tenants, Entities, Tokens
 from app.classes import APIResponse
 from app.services.mailer import mailer
+from app.services.db import db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -44,45 +43,50 @@ async def signup(data: SignupRequest):
 	if user:
 		APIResponse.bad_request("UserID already Exists")
 
-	tenant = Tenants(
-		name = "your tenant name",
-		email = data.email,
-		is_active = True
-	)
+	async with db.transaction() as conn:
 
-	tenant = await tenant.insert()
+		tenant = Tenants(
+			name = "your tenant name",
+			email = data.email,
+			is_active = True,
+			connection = conn
+		)
 
-	if not tenant.id:
-		print("Tenant Creation Error")
-		APIResponse.internal_error("Error occurred during creation process, please try again.")
+		tenant = await tenant.insert()
 
-	initEntity = Entities(
-		name = "your company name",
-		tenant_id = tenant.id,
-		is_active = True
-	)
+		if not tenant.id:
+			print("Tenant Creation Error")
+			APIResponse.internal_error("Error occurred during creation process, please try again.")
 
-	initEntity = await initEntity.insert()
+		initEntity = Entities(
+			name = "your company name",
+			tenant_id = tenant.id,
+			is_active = True,
+			connection = conn
+		)
 
-	if not initEntity.id:
-		print("Entity Creation Error")
-		APIResponse.internal_error("Error occurred during creation process, please try again.")
+		initEntity = await initEntity.insert()
 
-	hashed_password = hash_password(data.password)
+		if not initEntity.id:
+			print("Entity Creation Error")
+			APIResponse.internal_error("Error occurred during creation process, please try again.")
 
-	# signup user
-	user = Users(
-		email=data.email,
-		user_id=data.user_id,
-		password=hashed_password,
-		tenant_id=tenant.id,
-		default_company_id=initEntity.id
-	)
+		hashed_password = hash_password(data.password)
 
-	user = await user.insert()
+		# signup user
+		user = Users(
+			email=data.email,
+			user_id=data.user_id,
+			password=hashed_password,
+			tenant_id=tenant.id,
+			default_company_id=initEntity.id,
+			connection = conn
+		)
 
-	if not user:
-		APIResponse.internal_error("Signup Failed, please try again or reach out to support")
+		user = await user.insert()
+
+		if not user.id:
+			APIResponse.internal_error("Signup Failed, please try again or reach out to support")
 
 	await mailer.send_verify_account_email(user)
 

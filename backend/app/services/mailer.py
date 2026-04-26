@@ -92,8 +92,6 @@ class Mailer:
 
 		token = await token.insert()
 
-		print(f"Hashed Token {hashed_token}")
-
 		verify_url = f"{settings.FRONTEND_URL}/verify-account?token={raw_token}"
 
 		context = {
