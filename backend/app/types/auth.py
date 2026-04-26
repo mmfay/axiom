@@ -8,7 +8,7 @@ class UserEmail(BaseModel):
     email: EmailStr
     
 class Token(BaseModel):
-    token: EmailStr
+    token: str
 
 class LoginRequest(UserEmail):
     password: str = Field(min_length=6)
