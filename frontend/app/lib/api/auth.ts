@@ -1,5 +1,5 @@
 import { getJSON, postJSON } from "./submissions";
-import { LoginRequest, ResetPassword, SignupRequest, UserEmail } from "../types/auth";
+import { LoginRequest, ResetPassword, SignupRequest, Token, UserEmail } from "../types/auth";
 import { APIResult } from "../types/data";
 
 export async function login(body: LoginRequest): Promise<APIResult<null>> {
@@ -20,6 +20,10 @@ export async function forgotPassword(body: UserEmail): Promise<APIResult<null>> 
 
 export async function resetPassword(body: ResetPassword): Promise<APIResult<null>> {
 	return postJSON("/auth/reset-password", body);
+}
+
+export async function verifyAccount(body: Token): Promise<APIResult<null>> {
+	return postJSON("/auth/verify-account", body);
 }
 
 export async function me(): Promise<APIResult<null>> {

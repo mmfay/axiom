@@ -4,13 +4,16 @@ export interface UserEmail {
 	email: string
 }
 
+export interface Token {
+	token: string
+}
+
 export interface LoginRequest extends UserEmail {
 	password: string;
 }
 
-export interface ResetPassword {
+export interface ResetPassword extends Token {
 	password: string;
-	token: string;
 }
 
 export interface SignupRequest extends UserEmail {
