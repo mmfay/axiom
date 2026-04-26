@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from app.classes.apiresponse import APIResponse
 from app.services import auth
 from app.services.session import get_current_user
-from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword
+from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
 from app.services.config import settings
 from app.tables.Sessions import Sessions
 
@@ -63,6 +63,10 @@ async def forgotPassword(data: UserEmail):
 @router.post("/reset-password")
 async def resetPassword(data: ResetPassword):
 	return await auth.resetPassword(data)
+
+@router.post("/verify-account")
+async def verifyAccount(data: Token):
+	return await auth.verifyAccount(data)
 
 @router.post("/logout")
 def logout():

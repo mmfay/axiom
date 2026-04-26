@@ -1,5 +1,7 @@
+import hashlib
+
 from passlib.context import CryptContext
-from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword
+from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
 from app.tables import Users, Tenants, Entities, Tokens
 from app.classes import APIResponse
 from app.services.mailer import mailer
@@ -44,7 +46,8 @@ async def signup(data: SignupRequest):
 
 	tenant = Tenants(
 		name = "your tenant name",
-		email = data.email
+		email = data.email,
+		is_active = True
 	)
 
 	tenant = await tenant.insert()
@@ -55,12 +58,13 @@ async def signup(data: SignupRequest):
 
 	initEntity = Entities(
 		name = "your company name",
-		tenant_id = tenant.id
+		tenant_id = tenant.id,
+		is_active = True
 	)
 
 	initEntity = await initEntity.insert()
 
-	if not tenant.id:
+	if not initEntity.id:
 		print("Entity Creation Error")
 		APIResponse.internal_error("Error occurred during creation process, please try again.")
 
@@ -75,7 +79,12 @@ async def signup(data: SignupRequest):
 		default_company_id=initEntity.id
 	)
 
-	await user.insert()
+	user = await user.insert()
+
+	if not user:
+		APIResponse.internal_error("Signup Failed, please try again or reach out to support")
+
+	await mailer.send_verify_account_email(user)
 
 	return APIResponse.ok("You are now signed up, please review your email for next steps")
 
@@ -85,9 +94,13 @@ def logout():
 
 async def forgotPassword(data: UserEmail):
 		
-	await mailer.send_reset_password_email(
-		to_email=data.email
-	)
+	user = await Users.findByEmail(data.email)
+
+	if not user:
+		print("user not found, but sending ok for security purposes")
+		return APIResponse.ok()
+
+	await mailer.send_reset_password_email(user)
 
 	return APIResponse.ok()
 
@@ -110,6 +123,26 @@ async def resetPassword(data: ResetPassword):
 	user = await user.update()
 	
 	return APIResponse.ok()
+
+async def verifyAccount(data: Token):
+
+	raw_token = data.token
+
+	token = await Tokens.findByToken(raw_token)
+
+	if not token: 
+		APIResponse.bad_request("Token doesn't exist")
+
+	user = await Users.find(token.user_id)
+
+	if not user:
+		APIResponse.bad_request("User doesn't exist")
+
+	user.is_enabled = True
+
+	await user.update()
+
+	return APIResponse.ok("Account Verified")
 
 async def get_me():
     return APIResponse.ok("You are now signed up, please review your email for next steps", {
