@@ -4,10 +4,18 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { useRouter } from "next/navigation";
 import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me } from "../lib/api/auth";
 
+export type Company = {
+	id: number;
+	name: string;
+};
+
 export type AuthUser = {
 	id: string;
 	user_id: string;
 	email: string;
+	tenant_id: number;
+	company_id: number | null;
+	companies: Company[];
 };
 
 export type AuthState = {

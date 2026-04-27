@@ -56,11 +56,19 @@ CREATE TABLE IF NOT EXISTS tokens (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-INSERT INTO users (email, user_id, password, is_enabled, tenant_id)
+INSERT INTO users (email, user_id, password, is_enabled, tenant_id, default_company_id)
 VALUES
-    ('admin@softwarerror.com', 'admin', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1),
-    ('john.doe@softwarerror.com', 'jdoe', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', FALSE, 1),
-    ('jane.smith@softwarerror.com', 'jsmith', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1),
-    ('michael.brown@softwarerror.com', 'mbrown', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1),
-	('matthew.fay@softwarerror.com', 'mfay', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1),
-    ('sarah.wilson@softwarerror.com', 'swilson', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1);
+    ('admin@softwarerror.com', 'admin', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
+    ('john.doe@softwarerror.com', 'jdoe', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', FALSE, 1, 1),
+    ('jane.smith@softwarerror.com', 'jsmith', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
+    ('michael.brown@softwarerror.com', 'mbrown', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
+	('matthew.fay@softwarerror.com', 'mfay', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
+    ('sarah.wilson@softwarerror.com', 'swilson', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1);
+
+INSERT INTO tenants (name, email, is_active)
+VALUES
+	('Softwarerror', 'matthew.fay@softwarerror.com', TRUE);
+
+INSERT INTO entities (tenant_id, name, is_active)
+VALUES
+	(1, 'Softwarerror LLC', TRUE);

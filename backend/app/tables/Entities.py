@@ -81,7 +81,26 @@ class Entities(Common):
 		return self
 
 	@classmethod
-	async def find(cls, id: int, connection=None) -> "Entities | None":	
+	async def findByTenant(cls, tenant_id: int, connection=None) -> list["Entities"]:
+		"""
+		Returns all active entities for a tenant.
+		"""
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+				.where("tenant_id = $1")
+				.where("is_active = TRUE")
+			.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, tenant_id)
+		
+		return [cls.from_row(row, connection) for row in rows]
+
+	@classmethod
+	async def find(cls, id: int, connection=None) -> "Entities | None":
 		"""
 		Finds a record in entity table by record id
 		"""
