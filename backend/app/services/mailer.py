@@ -1,5 +1,6 @@
 import smtplib
 import hashlib
+import secrets
 from email.message import EmailMessage
 from pathlib import Path
 from string import Template
@@ -80,7 +81,7 @@ class Mailer:
 
 	async def send_verify_account_email(self, user: Users) -> None:
 
-		raw_token = '1234'
+		raw_token = secrets.token_urlsafe(32)
 
 		hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
 
@@ -117,7 +118,7 @@ class Mailer:
 
 		user = await Users.findByEmail(user.email)
 
-		raw_token = '1234'
+		raw_token = secrets.token_urlsafe(32)
 
 		hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
 
