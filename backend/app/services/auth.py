@@ -1,6 +1,6 @@
 from passlib.context import CryptContext
 from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
-from app.tables import Users, Tenants, Entities, Tokens
+from app.tables import Users, Tenants, Entities, Tokens, Roles, UserRoleAssignments
 from app.classes import APIResponse
 from app.services.mailer import mailer
 from app.services.db import db
@@ -87,6 +87,24 @@ async def signup(data: SignupRequest):
 
 		if not user.id:
 			APIResponse.internal_error("Signup Failed, please try again or reach out to support")
+
+		role = Roles(
+			tenant_id=tenant.id,
+			name="sysadmin",
+			description="Full system access",
+			connection=conn
+		)
+
+		role = await role.insert()
+
+		assignment = UserRoleAssignments(
+			user_id=user.id,
+			role_id=role.id,
+			tenant_id=tenant.id,
+			connection=conn
+		)
+
+		await assignment.insert()
 
 	await mailer.send_verify_account_email(user)
 

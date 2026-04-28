@@ -17,8 +17,9 @@ class Database:
 		# Async connection pool (initialized on startup)
 		self.pool: Optional[asyncpg.Pool] = None
 
-		# Path to schema file for automatic DB initialization (dev only)
 		self.schema_file = Path("ddl/schema.sql")
+		self.data_file = Path("ddl/data.sql")
+		self.index_file = Path("ddl/index.sql")
 
 	async def connect(self) -> None:
 		# Initialize connection pool if not already created
@@ -72,9 +73,10 @@ class Database:
 		if settings.IS_PROD and settings.AUTO_APPLY_SCHEMA:
 			raise RuntimeError("AUTO_APPLY_SCHEMA cannot be enabled in production.")
 
-		# Apply schema automatically in non-production environments
 		if not settings.IS_PROD:
 			await self.apply_schema()
+			await self.apply_data()
+			await self.apply_indexes()
 
 	async def apply_schema(self) -> None:
 		# Load and execute schema.sql file against database
@@ -88,8 +90,31 @@ class Database:
 		async with pool.acquire() as conn:
 			await conn.execute(sql)
 
-		# Simple confirmation for local/dev visibility
 		print("Schema applied")
+
+	async def apply_data(self) -> None:
+		if not self.data_file.exists():
+			raise FileNotFoundError(f"Data file not found: {self.data_file}")
+
+		sql = self.data_file.read_text(encoding="utf-8")
+		pool = self._ensure_pool()
+
+		async with pool.acquire() as conn:
+			await conn.execute(sql)
+
+		print("Data applied")
+
+	async def apply_indexes(self) -> None:
+		if not self.index_file.exists():
+			raise FileNotFoundError(f"Index file not found: {self.index_file}")
+
+		sql = self.index_file.read_text(encoding="utf-8")
+		pool = self._ensure_pool()
+
+		async with pool.acquire() as conn:
+			await conn.execute(sql)
+
+		print("Indexes applied")
                
 # Global database instance used across the application
 db = Database()

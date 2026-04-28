@@ -1,5 +1,12 @@
+DROP TABLE IF EXISTS user_role_assignments;
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS permissions;
 DROP TABLE IF EXISTS tokens;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS tenants;
+DROP TABLE IF EXISTS entities;
 
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
@@ -13,8 +20,6 @@ CREATE TABLE IF NOT EXISTS users (
 	email_verified BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-DROP TABLE IF EXISTS sessions;
-
 CREATE TABLE IF NOT EXISTS sessions (
 	id SERIAL PRIMARY KEY,
 	user_id TEXT NOT NULL,
@@ -26,8 +31,6 @@ CREATE TABLE IF NOT EXISTS sessions (
 	is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-DROP TABLE IF EXISTS tenants;
-
 CREATE TABLE IF NOT EXISTS tenants (
 	id SERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
@@ -36,14 +39,43 @@ CREATE TABLE IF NOT EXISTS tenants (
 	is_active BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-DROP TABLE IF EXISTS entities;
-
 CREATE TABLE IF NOT EXISTS entities (
 	id SERIAL PRIMARY KEY,
 	tenant_id INTEGER NOT NULL,
 	name TEXT NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 	is_active BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL UNIQUE,
+	description TEXT,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	name TEXT NOT NULL,
+	description TEXT,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+	role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	permission_id INTEGER NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_role_assignments (
+	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (user_id, role_id)
 );
 
 CREATE TABLE IF NOT EXISTS tokens (
@@ -55,20 +87,3 @@ CREATE TABLE IF NOT EXISTS tokens (
 	used_at TIMESTAMPTZ,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-INSERT INTO users (email, user_id, password, is_enabled, tenant_id, default_company_id)
-VALUES
-    ('admin@softwarerror.com', 'admin', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
-    ('john.doe@softwarerror.com', 'jdoe', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', FALSE, 1, 1),
-    ('jane.smith@softwarerror.com', 'jsmith', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
-    ('michael.brown@softwarerror.com', 'mbrown', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
-	('matthew.fay@softwarerror.com', 'mfay', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1),
-    ('sarah.wilson@softwarerror.com', 'swilson', '$2b$12$jUzsxGMk3ES8VBpRWKvW.uYwZgEbKJHUo0/0G3Fi4AsGy.GhaxW2u', TRUE, 1, 1);
-
-INSERT INTO tenants (name, email, is_active)
-VALUES
-	('Softwarerror', 'matthew.fay@softwarerror.com', TRUE);
-
-INSERT INTO entities (tenant_id, name, is_active)
-VALUES
-	(1, 'Softwarerror LLC', TRUE);
