@@ -27,7 +27,8 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO permissions (name, description)
 VALUES
-    ('General_ledger.Write', 'Create and edit general ledger entries')
+    ('General_ledger.Write', 'Create and edit general ledger entries'),
+    ('General_ledger.Read',  'View general ledger entries')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO role_permissions (role_id, permission_id, tenant_id)
@@ -35,7 +36,7 @@ SELECT r.id, p.id, 1
 FROM roles r, permissions p
 WHERE r.name = 'Controller'
   AND r.tenant_id = 1
-  AND p.name = 'General_ledger.Write'
+  AND p.name IN ('General_ledger.Write', 'General_ledger.Read')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO user_role_assignments (user_id, role_id, tenant_id)

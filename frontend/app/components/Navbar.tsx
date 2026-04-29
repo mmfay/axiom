@@ -5,18 +5,20 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/app/provider/AuthProvider";
 
-const modules = [
-	{ label: "Home", href: "/home" },
-];
-
 export default function Navbar() {
 
-	const { user, handleLogout, handleSetActiveRole, handleSetActiveCompany } = useAuth();
+	const { user, handleLogout, handleSetActiveRole, handleSetActiveCompany, hasPermission, isSysAdmin } = useAuth();
 	const pathname = usePathname();
 	const [rolesOpen, setRolesOpen] = useState(false);
 	const [companiesOpen, setCompaniesOpen] = useState(false);
 	const rolesRef = useRef<HTMLDivElement>(null);
 	const companiesRef = useRef<HTMLDivElement>(null);
+
+	const pages = [
+		{ label: "Home", href: "/home", allowed: true },
+		{ label: "General Ledger", href: "/gl", allowed: hasPermission("General_ledger.Read") },
+		{ label: "System Admin", href: "/sysadmin", allowed: isSysAdmin },
+	].filter(p => p.allowed);
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
@@ -39,7 +41,7 @@ export default function Navbar() {
 		</span>
 
 		<div className="flex items-center gap-1 flex-1">
-			{modules.map(({ label, href }) => {
+			{pages.map(({ label, href }) => {
 			const active = pathname === href || pathname.startsWith(href + "/");
 			return (
 				<Link

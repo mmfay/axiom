@@ -48,6 +48,8 @@ export type AuthContextValue = AuthState & {
 	handleVerifyAccount: (token: string) => Promise<void>;
 	handleSetActiveRole: (role_id: number) => Promise<void>;
 	handleSetActiveCompany: (company_id: number) => Promise<void>;
+	hasPermission: (name: string) => boolean;
+	isSysAdmin: boolean;
 	refresh: () => Promise<void>;
 
 };
@@ -261,7 +263,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const res = await verifyAccount({ token })
 
 			if (!res.ok) {
-				alert("hey");
 				return;
 			}
 
@@ -274,6 +275,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 		
 	};
+
+	const isSysAdmin = user?.active_role?.name === "sysadmin";
+
+	const hasPermission = (name: string) =>
+		isSysAdmin || (user?.active_role_permissions.some(p => p.name === name) ?? false);
 
 	const value: AuthContextValue = useMemo(() => (
 		{
@@ -289,6 +295,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			handleVerifyAccount,
 			handleSetActiveRole,
 			handleSetActiveCompany,
+			hasPermission,
+			isSysAdmin,
 			refresh
 		}),
 		[isAuth, user, error, loading]
