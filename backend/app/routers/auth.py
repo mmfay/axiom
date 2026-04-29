@@ -6,23 +6,13 @@ from app.services import auth
 from app.services.session import get_current_user
 from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
 from app.services.config import settings
-from app.tables import Sessions, Entities
+from app.tables import Sessions
 
 router = APIRouter()
 
 @router.get("/me")
 async def get_me(current_user=Depends(get_current_user)):
-
-	companies = await Entities.findByTenant(current_user.tenant_id)
-	
-	return APIResponse.ok("Valid Session", {
-		"id": current_user.id,
-		"user_id": current_user.user_id,
-		"email": current_user.email,
-		"tenant_id": current_user.tenant_id,
-		"company_id": current_user.company_id,
-		"companies": [{ "id": c.id, "name": c.name } for c in companies],
-	})
+	return await auth.get_me(current_user)
 
 @router.post("/login")
 async def login(data: LoginRequest):

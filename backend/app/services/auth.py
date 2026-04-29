@@ -166,11 +166,26 @@ async def verifyAccount(data: Token):
 
 	return APIResponse.ok("Account Verified")
 
-async def get_me():
-    return APIResponse.ok("You are now signed up, please review your email for next steps", {
-        "id": 1,
-        "user_id": "matt",
-        "email": "admin@example.com",
-        "is_enabled": True,
-        "permissions": ["users.view", "users.edit"],
-    })
+async def get_me(current_user):
+
+	companies = await Entities.findByTenant(current_user.tenant_id)
+
+	user = await Users.findByUserID(current_user.user_id)
+	assignments = await UserRoleAssignments.findByUser(user.id, current_user.tenant_id)
+
+	roles = []
+	
+	for assignment in assignments:
+		role = await Roles.find(assignment.role_id)
+		if role:
+			roles.append({ "id": role.id, "name": role.name })
+
+	return APIResponse.ok("Valid Session", {
+		"id": current_user.id,
+		"user_id": current_user.user_id,
+		"email": current_user.email,
+		"tenant_id": current_user.tenant_id,
+		"company_id": current_user.company_id,
+		"companies": [{ "id": c.id, "name": c.name } for c in companies],
+		"roles": roles,
+	})

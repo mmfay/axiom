@@ -9,6 +9,11 @@ export type Company = {
 	name: string;
 };
 
+export type Role = {
+	id: number;
+	name: string;
+};
+
 export type AuthUser = {
 	id: string;
 	user_id: string;
@@ -16,6 +21,7 @@ export type AuthUser = {
 	tenant_id: number;
 	company_id: number | null;
 	companies: Company[];
+	roles: Role[];
 };
 
 export type AuthState = {
