@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me } from "../lib/api/auth";
+import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me, setRole, setCompany } from "../lib/api/auth";
 
 export type Company = {
 	id: number;
@@ -10,6 +10,11 @@ export type Company = {
 };
 
 export type Role = {
+	id: number;
+	name: string;
+};
+
+export type Permission = {
 	id: number;
 	name: string;
 };
@@ -22,6 +27,8 @@ export type AuthUser = {
 	company_id: number | null;
 	companies: Company[];
 	roles: Role[];
+	active_role: Role | null;
+	active_role_permissions: Permission[];
 };
 
 export type AuthState = {
@@ -39,6 +46,8 @@ export type AuthContextValue = AuthState & {
 	handleForgotPassword: (email: string) => Promise<void>;
 	handleResetPassword: (newPassword: string, token: string) => Promise<void>;
 	handleVerifyAccount: (token: string) => Promise<void>;
+	handleSetActiveRole: (role_id: number) => Promise<void>;
+	handleSetActiveCompany: (company_id: number) => Promise<void>;
 	refresh: () => Promise<void>;
 
 };
@@ -198,6 +207,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		
 	};
 
+	// set active company
+	const handleSetActiveCompany = async (company_id: number) => {
+
+		try {
+
+			const res = await setCompany({ company_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
+	// set active role
+	const handleSetActiveRole = async (role_id: number) => {
+
+		try {
+
+			const res = await setRole({ role_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
 	// verify account
 	const handleVerifyAccount = async (token: string) => {
 		
@@ -223,18 +276,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	const value: AuthContextValue = useMemo(() => (
-		{ 
-			isAuth, 
-			user, 
-			error, 
-			loading, 
-			handleLogin, 
-			handleSignup, 
-			handleLogout, 
-			handleForgotPassword, 
-			handleResetPassword, 
+		{
+			isAuth,
+			user,
+			error,
+			loading,
+			handleLogin,
+			handleSignup,
+			handleLogout,
+			handleForgotPassword,
+			handleResetPassword,
 			handleVerifyAccount,
-			refresh 
+			handleSetActiveRole,
+			handleSetActiveCompany,
+			refresh
 		}),
 		[isAuth, user, error, loading]
 	);

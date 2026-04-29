@@ -1,6 +1,6 @@
 from passlib.context import CryptContext
 from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token
-from app.tables import Users, Tenants, Entities, Tokens, Roles, UserRoleAssignments
+from app.tables import Users, Tenants, Entities, Tokens, Roles, UserRoleAssignments, Permissions, RolePermissions
 from app.classes import APIResponse
 from app.services.mailer import mailer
 from app.services.db import db
@@ -174,11 +174,23 @@ async def get_me(current_user):
 	assignments = await UserRoleAssignments.findByUser(user.id, current_user.tenant_id)
 
 	roles = []
-	
 	for assignment in assignments:
 		role = await Roles.find(assignment.role_id)
 		if role:
 			roles.append({ "id": role.id, "name": role.name })
+
+	active_role = None
+	active_role_permissions = []
+
+	if current_user.active_role_id:
+		role = await Roles.find(current_user.active_role_id)
+		if role:
+			active_role = { "id": role.id, "name": role.name }
+			rp_list = await RolePermissions.findByRole(role.id, current_user.tenant_id)
+			for rp in rp_list:
+				permission = await Permissions.find(rp.permission_id)
+				if permission:
+					active_role_permissions.append({ "id": permission.id, "name": permission.name })
 
 	return APIResponse.ok("Valid Session", {
 		"id": current_user.id,
@@ -188,4 +200,33 @@ async def get_me(current_user):
 		"company_id": current_user.company_id,
 		"companies": [{ "id": c.id, "name": c.name } for c in companies],
 		"roles": roles,
+		"active_role": active_role,
+		"active_role_permissions": active_role_permissions,
 	})
+
+async def set_company(current_user, company_id: int):
+
+	companies = await Entities.findByTenant(current_user.tenant_id)
+	company_ids = {c.id for c in companies}
+
+	if company_id not in company_ids:
+		return APIResponse.bad_request("Company not found in tenant")
+
+	current_user.company_id = company_id
+	await current_user.update()
+
+	return APIResponse.ok("Active company updated")
+
+async def set_role(current_user, role_id: int):
+
+	user = await Users.findByUserID(current_user.user_id)
+	assignments = await UserRoleAssignments.findByUser(user.id, current_user.tenant_id)
+
+	assigned_role_ids = {a.role_id for a in assignments}
+	if role_id not in assigned_role_ids:
+		return APIResponse.bad_request("Role not assigned to user")
+
+	current_user.active_role_id = role_id
+	await current_user.update()
+
+	return APIResponse.ok("Active role updated")

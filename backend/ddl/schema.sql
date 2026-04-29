@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 	email TEXT NOT NULL,
 	tenant_id INTEGER NOT NULL,
 	company_id INTEGER NULL,
+	active_role_id INTEGER NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 	expires_at TIMESTAMPTZ NOT NULL,
 	is_active BOOLEAN NOT NULL DEFAULT TRUE

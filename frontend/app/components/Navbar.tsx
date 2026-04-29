@@ -11,15 +11,20 @@ const modules = [
 
 export default function Navbar() {
 
-	const { user, handleLogout } = useAuth();
+	const { user, handleLogout, handleSetActiveRole, handleSetActiveCompany } = useAuth();
 	const pathname = usePathname();
 	const [rolesOpen, setRolesOpen] = useState(false);
+	const [companiesOpen, setCompaniesOpen] = useState(false);
 	const rolesRef = useRef<HTMLDivElement>(null);
+	const companiesRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
 			if (rolesRef.current && !rolesRef.current.contains(e.target as Node)) {
 				setRolesOpen(false);
+			}
+			if (companiesRef.current && !companiesRef.current.contains(e.target as Node)) {
+				setCompaniesOpen(false);
 			}
 		}
 		document.addEventListener("mousedown", handleClickOutside);
@@ -53,19 +58,59 @@ export default function Navbar() {
 		</div>
 
 		<div className="flex items-center gap-3">
-			<button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-			{user?.companies.find(c => c.id === user.company_id)?.name ?? "No Company"}
-			<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<div ref={companiesRef} className="relative hidden sm:block">
+			<button
+				onClick={() => setCompaniesOpen(o => !o)}
+				className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+			>
+				{user?.companies.find(c => c.id === user.company_id)?.name ?? "No Company"}
+				<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-			</svg>
+				</svg>
 			</button>
+
+			{companiesOpen && (
+				<div className="absolute right-0 mt-1 w-44 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md py-1">
+				{user?.companies.length ? (
+					user.companies.map(company => {
+					const isActive = company.id === user.company_id;
+					return (
+						<button
+						key={company.id}
+						onClick={() => {
+							handleSetActiveCompany(company.id);
+							setCompaniesOpen(false);
+						}}
+						className={`w-full text-left flex items-center justify-between px-3 py-1.5 text-sm transition-colors ${
+							isActive
+							? "text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800"
+							: "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+						}`}
+						>
+						{company.name}
+						{isActive && (
+							<svg className="w-3.5 h-3.5 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+							</svg>
+						)}
+						</button>
+					);
+					})
+				) : (
+					<div className="px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500">
+					No companies
+					</div>
+				)}
+				</div>
+			)}
+			</div>
 
 			<div ref={rolesRef} className="relative hidden sm:block">
 			<button
 				onClick={() => setRolesOpen(o => !o)}
 				className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
 			>
-				Roles
+				{user?.active_role?.name ?? "No Role"}
 				<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 				</svg>
@@ -74,14 +119,30 @@ export default function Navbar() {
 			{rolesOpen && (
 				<div className="absolute right-0 mt-1 w-44 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md py-1">
 				{user?.roles.length ? (
-					user.roles.map(role => (
-					<div
+					user.roles.map(role => {
+					const isActive = role.id === user.active_role?.id;
+					return (
+						<button
 						key={role.id}
-						className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
-					>
+						onClick={() => {
+							handleSetActiveRole(role.id);
+							setRolesOpen(false);
+						}}
+						className={`w-full text-left flex items-center justify-between px-3 py-1.5 text-sm transition-colors ${
+							isActive
+							? "text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800"
+							: "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+						}`}
+						>
 						{role.name}
-					</div>
-					))
+						{isActive && (
+							<svg className="w-3.5 h-3.5 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+							</svg>
+						)}
+						</button>
+					);
+					})
 				) : (
 					<div className="px-3 py-1.5 text-sm text-gray-400 dark:text-gray-500">
 					No roles assigned
@@ -90,10 +151,6 @@ export default function Navbar() {
 				</div>
 			)}
 			</div>
-
-			<span className="hidden md:block text-sm text-gray-500 dark:text-gray-400">
-			{user?.email}
-			</span>
 
 			<button
 			onClick={handleLogout}

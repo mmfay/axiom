@@ -23,6 +23,14 @@ export interface SignupRequest extends UserEmail {
 	password: string;
 }
 
+export interface SetRoleRequest {
+	role_id: number;
+}
+
+export interface SetCompanyRequest {
+	company_id: number;
+}
+
 export interface LoginResponse extends UserEmail {
 	user_id: number;
 	permissions: string[];

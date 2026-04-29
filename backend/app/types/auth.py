@@ -22,3 +22,9 @@ class SignupRequest(UserEmail):
 class ResetPassword(BaseModel):
     token: str
     password: str
+
+class SetRoleRequest(BaseModel):
+    role_id: int
+
+class SetCompanyRequest(BaseModel):
+    company_id: int
