@@ -2,11 +2,13 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
+from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
+from app.classes.appexception import AppException
 
 
 @dataclass
 class Users(Common):
-    
+
 	# table fields
 	id: Optional[int] = None
 	version_id: Optional[int] = None
@@ -19,7 +21,7 @@ class Users(Common):
 
 	# table name
 	table_name = "users"
-	
+
 	def __init__(
 		self,
 		id: Optional[int] = None,
@@ -51,11 +53,11 @@ class Users(Common):
 			SQL()
 				.insert(self.table_name)
 					.fields("email, password, user_id, tenant_id, default_company_id")
-            		.values("$1, $2, $3, $4, $5")
+					.values("$1, $2, $3, $4, $5")
 					.returning()
 				.getQuery()
 		)
-		
+
 		row = await self.fetch_one(sql, self.email, self.password, self.user_id, self.tenant_id, self.default_company_id)
 
 		if row is None:
@@ -140,11 +142,11 @@ class Users(Common):
 		return cls.from_row(row, connection)
 	
 	@classmethod
-	async def findByUserID(cls, user_id: str, connection=None) -> "Users | None":	
+	async def findByUserID(cls, user_id: str, connection=None) -> "Users | None":
 		"""
 		Finds a record in user table by UserID
 		"""
-		
+
 		temp = cls(connection=connection)
 
 		sql = (
@@ -155,10 +157,78 @@ class Users(Common):
 		)
 
 		row = await temp.fetch_one(sql, user_id)
-		
-		if row is None: 
+
+		if row is None:
 			return None
 
 		# now return a User or List of Users
 		return cls.from_row(row, connection)
-        
+
+	@classmethod
+	async def findByTenant(cls, tenant_id: int, connection=None) -> list["Users"]:
+		"""
+		Returns all users for a tenant.
+		"""
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+				.where("tenant_id = $1")
+			.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, tenant_id)
+
+		return [cls.from_row(row, connection) for row in rows]
+
+	@classmethod
+	async def getUserPagination(cls, tenant_id: int, cursor: str | None = None, connection=None) -> CursorPage:
+		"""
+		Cursor pagination (forward) using users.id.
+		- cursor encodes the last seen id
+		- returns up to `limit` items
+		"""
+		
+		temp = cls(connection=connection)
+
+		# get the users settings lines per page
+		# default to 25 for now
+		page_lines = 2
+
+		tenant = tenant_id
+
+		last_id = 0
+		if cursor:
+			try:
+				payload = decode_cursor(cursor)
+				last_id = int(payload.get("id", 0))
+			except Exception:
+				raise AppException(400, "Invalid cursor")
+
+		# Fetch limit + 1 to know if there is another page
+		sql = (
+			SQL()
+				.select(cls.table_name)
+				.columns("email", "user_id", "id", "is_enabled")
+				.where("tenant_id = $1")
+				.where("id > $2")
+				.order_by("id")
+				.limit("$3")
+				.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, tenant, last_id, page_lines + 1)
+
+		# Determine has_more by over-fetching
+		has_more = len(rows) > page_lines
+		rows = rows[:page_lines]
+
+		items = [cls.from_row(r, connection) for r in rows]
+
+		next_cursor = None
+		if has_more:
+			# cursor points to the last item in this page
+			next_cursor = encode_cursor({"id": dict(rows[-1])["id"]})
+
+		return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)   

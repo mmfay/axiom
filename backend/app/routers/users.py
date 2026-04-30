@@ -1,28 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.services import users
+from app.services.session import get_current_user
 
 router = APIRouter()
 
-FAKE_USERS = [
-    {"id": 1, "username": "matt", "email": "matt@example.com", "is_active": True},
-    {"id": 2, "username": "admin", "email": "admin@example.com", "is_active": True},
-]
-
-
-@router.get("/")
-def list_users():
-    return FAKE_USERS
-
-
-@router.get("/{user_id}")
-def get_user(user_id: int):
-    for user in FAKE_USERS:
-        if user["id"] == user_id:
-            return user
-    return {"message": "User not found"}
-
-
-@router.post("/")
-def create_user():
-    return {
-        "message": "Create user endpoint placeholder"
-    }
+@router.get("/listPage")
+async def get_users_list_page(cursor: str | None = None, current_user=Depends(get_current_user)):
+    return await users.get_users_list_page(current_user, cursor)
