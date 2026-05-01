@@ -52,7 +52,7 @@ export async function getJSON<
 		fullUrl += (url.includes("?") ? "&" : "?") + qs.toString();
 	}
 
-	const res = await fetch(`${API_BASE_URL}${url}`, {
+	const res = await fetch(`${API_BASE_URL}${fullUrl}`, {
 		method: "GET",
 		credentials: "include",
 		headers: { Accept: "application/json" },
