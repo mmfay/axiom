@@ -96,7 +96,7 @@ export async function deleteJSON<
 		fullUrl += (url.includes("?") ? "&" : "?") + qs.toString();
 	}
 
-	const res = await fetch(fullUrl, {
+	const res = await fetch(`${API_BASE_URL}${fullUrl}`, {
 		method: "DELETE",
 		credentials: "include",
 		headers: { Accept: "application/json" },

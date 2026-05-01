@@ -7,7 +7,7 @@ import { useAuth } from "@/app/provider/AuthProvider";
 
 export default function Navbar() {
 
-	const { user, handleLogout, handleSetActiveRole, handleSetActiveCompany, hasPermission, isSysAdmin } = useAuth();
+	const { user, handleLogout, handleSetActiveRole, handleSetActiveCompany, handleSetDefaultRole, hasPermission, isSysAdmin } = useAuth();
 	const pathname = usePathname();
 	const [rolesOpen, setRolesOpen] = useState(false);
 	const [companiesOpen, setCompaniesOpen] = useState(false);
@@ -119,30 +119,52 @@ export default function Navbar() {
 			</button>
 
 			{rolesOpen && (
-				<div className="absolute right-0 mt-1 w-44 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md py-1">
+				<div className="absolute right-0 mt-1 w-48 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-md py-1">
 				{user?.roles.length ? (
 					user.roles.map(role => {
 					const isActive = role.id === user.active_role?.id;
+					const isDefault = role.id === user.default_role_id;
 					return (
-						<button
+						<div
 						key={role.id}
-						onClick={() => {
-							handleSetActiveRole(role.id);
-							setRolesOpen(false);
-						}}
-						className={`w-full text-left flex items-center justify-between px-3 py-1.5 text-sm transition-colors ${
+						className={`flex items-center justify-between px-3 py-1.5 text-sm transition-colors ${
 							isActive
 							? "text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800"
 							: "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
 						}`}
 						>
-						{role.name}
-						{isActive && (
-							<svg className="w-3.5 h-3.5 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-							</svg>
-						)}
+						<button
+							className="flex-1 text-left"
+							onClick={() => {
+							handleSetActiveRole(role.id);
+							setRolesOpen(false);
+							}}
+						>
+							{role.name}
 						</button>
+						<div className="flex items-center gap-1.5 shrink-0">
+							<button
+							title={isDefault ? "Remove default" : "Set as default"}
+							onClick={() => handleSetDefaultRole(isDefault ? null : role.id)}
+							className="text-gray-400 hover:text-yellow-400 dark:hover:text-yellow-400 transition-colors"
+							>
+							{isDefault ? (
+								<svg className="w-3.5 h-3.5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+								</svg>
+							) : (
+								<svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+								<path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+								</svg>
+							)}
+							</button>
+							{isActive && (
+							<svg className="w-3.5 h-3.5 text-gray-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+							</svg>
+							)}
+						</div>
+						</div>
 					);
 					})
 				) : (

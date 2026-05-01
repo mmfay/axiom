@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createUser, getUsersListPage, updateUsers } from "../api/users";
-import { Users, UsersCreate, UsersPatch } from "../types/users";
+import { addUserRole, getUserRoles, removeUserRole } from "../api/permissions";
+import { UserRolesData, Users, UsersCreate, UsersPatch } from "../types/users";
 import { CachedPage, FilterSet } from "../types/data";
 
 export type UsersController = {
@@ -20,6 +21,9 @@ export type UsersController = {
 	pageNumber: number;
 	onUpdate: (recID: number, patch: UsersPatch) => Promise<Users>;
 	onCreate: (data: UsersCreate) => Promise<Users>;
+	onGetRoles: (userId: number) => Promise<UserRolesData>;
+	onAddRole: (userId: number, roleId: number) => Promise<void>;
+	onRemoveRole: (userId: number, roleId: number) => Promise<void>;
 
 	// filters
 	itemFilters: FilterSet;
@@ -219,6 +223,22 @@ export function useUserController(): UsersController {
 		
 	);
 
+	const onGetRoles = useCallback(async (userId: number): Promise<UserRolesData> => {
+		const res = await getUserRoles(userId);
+		if (!res.ok || !res.data) throw new Error(res.message ?? "Failed to fetch roles");
+		return res.data;
+	}, []);
+
+	const onAddRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
+		const res = await addUserRole(userId, roleId);
+		if (!res.ok) throw new Error(res.message ?? "Failed to add role");
+	}, []);
+
+	const onRemoveRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
+		const res = await removeUserRole(userId, roleId);
+		if (!res.ok) throw new Error(res.message ?? "Failed to remove role");
+	}, []);
+
 	// make accessible outside of controller
 	return {
 		pages,
@@ -234,6 +254,9 @@ export function useUserController(): UsersController {
 		pageNumber,
 		onUpdate,
 		onCreate,
+		onGetRoles,
+		onAddRole,
+		onRemoveRole,
 		itemFilters,
 		setItemFiltersState,
 		clearFilters
