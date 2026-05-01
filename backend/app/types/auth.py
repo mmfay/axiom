@@ -27,6 +27,9 @@ class SetRoleRequest(BaseModel):
 class SetCompanyRequest(BaseModel):
     company_id: int
 
+class SetDefaultRoleRequest(BaseModel):
+    role_id: int | None = None
+
 class CreateUserRequest(UserEmail):
 	user_id: str
 	password: str = Field(min_length=6)

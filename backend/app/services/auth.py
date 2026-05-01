@@ -234,7 +234,8 @@ async def set_default_role(current_user, role_id: int | None):
 			APIResponse.bad_request("Role not assigned to user")
 
 	user.default_role_id = role_id
-	await user.set_default_role()
+	
+	await user.update()
 
 	return APIResponse.ok("Default role updated")
 

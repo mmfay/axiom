@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     version_id INTEGER NOT NULL DEFAULT 1,
 	tenant_id INTEGER NOT NULL,
 	default_company_id INTEGER NULL,
+	default_role_id INTEGER NULL,
 	is_enabled BOOLEAN NOT NULL DEFAULT FALSE,
 	email_verified BOOLEAN NOT NULL DEFAULT FALSE
 );

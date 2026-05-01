@@ -16,3 +16,14 @@ export interface UsersCreate extends UserEmail {
 	user_id: string;
 	password: string;
 }
+
+export interface UserRole {
+	id: number;
+	name: string;
+	description: string | null;
+}
+
+export interface UserRolesData {
+	assigned: UserRole[];
+	available: UserRole[];
+}

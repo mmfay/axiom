@@ -18,6 +18,7 @@ class Users(Common):
 	is_enabled: Optional[bool] = None
 	tenant_id: Optional[int] = None
 	default_company_id: Optional[int] = None
+	default_role_id: Optional[int] = None
 
 	# table name
 	table_name = "users"
@@ -32,6 +33,7 @@ class Users(Common):
 		is_enabled: Optional[bool] = None,
 		tenant_id: Optional[int] = None,
 		default_company_id: Optional[int] = None,
+		default_role_id: Optional[int] = None,
 		connection=None,
 	):
 		super().__init__(connection)
@@ -43,6 +45,7 @@ class Users(Common):
 		self.is_enabled = is_enabled
 		self.tenant_id = tenant_id
 		self.default_company_id = default_company_id
+		self.default_role_id = default_role_id
 
 	#
 	async def insert(self) -> "Users":
@@ -79,13 +82,13 @@ class Users(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("email=$1, password=$2, is_enabled=$3, version_id=$4+1")
-					.where("id = $5 AND version_id = $4")
+					.set("email=$1, password=$2, is_enabled=$3, default_role_id=$4, version_id=$5+1")
+					.where("id = $6 AND version_id = $5")
 					.returning()
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.email, self.password, self.is_enabled, self.version_id, self.id)
+		row = await self.fetch_one(sql, self.email, self.password, self.is_enabled, self.default_role_id, self.version_id, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -96,7 +99,7 @@ class Users(Common):
 		return self
 
 	@classmethod
-	async def find(cls, id: int, connection=None) -> "Users | None":	
+	async def find(cls, id: int, connection=None) -> "Users | None":
 		"""
 		Finds a record in user table by record id
 		"""

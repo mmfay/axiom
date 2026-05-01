@@ -52,13 +52,13 @@ class Sessions(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("user_id, email, tenant_id, company_id, expires_at")
-            		.values("$1, $2, $3, $4, $5")
+					.fields("user_id, email, tenant_id, company_id, active_role_id, expires_at")
+            		.values("$1, $2, $3, $4, $5, $6")
 					.returning()
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.expires_at)
+		row = await self.fetch_one(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.active_role_id, self.expires_at)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

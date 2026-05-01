@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me, setRole, setCompany } from "../lib/api/auth";
+import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me, setRole, setCompany, setDefaultRole } from "../lib/api/auth";
 
 export type Company = {
 	id: number;
@@ -25,6 +25,7 @@ export type AuthUser = {
 	email: string;
 	tenant_id: number;
 	company_id: number | null;
+	default_role_id: number | null;
 	companies: Company[];
 	roles: Role[];
 	active_role: Role | null;
@@ -48,6 +49,7 @@ export type AuthContextValue = AuthState & {
 	handleVerifyAccount: (token: string) => Promise<void>;
 	handleSetActiveRole: (role_id: number) => Promise<void>;
 	handleSetActiveCompany: (company_id: number) => Promise<void>;
+	handleSetDefaultRole: (role_id: number | null) => Promise<void>;
 	hasPermission: (name: string) => boolean;
 	isSysAdmin: boolean;
 	refresh: () => Promise<void>;
@@ -231,6 +233,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	};
 
+	// set default role
+	const handleSetDefaultRole = async (role_id: number | null) => {
+
+		try {
+
+			const res = await setDefaultRole({ role_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
 	// set active role
 	const handleSetActiveRole = async (role_id: number) => {
 
@@ -295,6 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			handleVerifyAccount,
 			handleSetActiveRole,
 			handleSetActiveCompany,
+			handleSetDefaultRole,
 			hasPermission,
 			isSysAdmin,
 			refresh
