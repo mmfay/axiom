@@ -7,7 +7,12 @@ export interface Users extends UserEmail {
 	is_enabled: boolean;
 }
 
-export interface UsersPatch extends UserEmail {
+export interface UsersPatch {
+	email?: string;
+	is_enabled?: boolean;
+}
+
+export interface UsersCreate extends UserEmail {
 	user_id: string;
-	is_enabled: boolean;
+	password: string;
 }

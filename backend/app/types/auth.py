@@ -26,3 +26,11 @@ class SetRoleRequest(BaseModel):
 
 class SetCompanyRequest(BaseModel):
     company_id: int
+
+class CreateUserRequest(UserEmail):
+	user_id: str
+	password: str = Field(min_length=6)
+
+class UpdateUserRequest(BaseModel):
+	email: EmailStr | None = None
+	is_enabled: bool | None = None

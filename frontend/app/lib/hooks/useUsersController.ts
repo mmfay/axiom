@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getUsersListPage, updateUsers } from "../api/users";
-import { Users, UsersPatch } from "../types/users";
+import { createUser, getUsersListPage, updateUsers } from "../api/users";
+import { Users, UsersCreate, UsersPatch } from "../types/users";
 import { CachedPage, FilterSet } from "../types/data";
 
 export type UsersController = {
 	pages: CachedPage<Users>[];
 	currentPage: CachedPage<Users> | undefined;
-	items: Users[];
+	users: Users[];
 	loading: boolean;
 	error: string | null;
 	reload: () => Promise<void>;
@@ -19,6 +19,7 @@ export type UsersController = {
 	showNext: boolean;
 	pageNumber: number;
 	onUpdate: (recID: number, patch: UsersPatch) => Promise<Users>;
+	onCreate: (data: UsersCreate) => Promise<Users>;
 
 	// filters
 	itemFilters: FilterSet;
@@ -36,7 +37,7 @@ export function useUserController(): UsersController {
 	const [error, setError] = useState<string | null>(null);
 
 	const currentPage = pages[pageIndex];
-	const items = currentPage?.items ?? [];
+	const users = currentPage?.items ?? [];
 	const pageNumber = currentPage?.page_number ?? 1;
 
 	const showPrev = pageIndex > 0;
@@ -198,11 +199,31 @@ export function useUserController(): UsersController {
 		[]
 	);
 
+	const onCreate = useCallback(
+
+		async (data: UsersCreate): Promise<Users> => {
+			setError(null);
+
+			const res = await createUser(data);
+
+			if (!res.ok || !res.data) {
+				throw new Error(res.message ?? "Failed to create user");
+			}
+
+			await reload();
+
+			return res.data;
+		},
+
+		[reload]
+		
+	);
+
 	// make accessible outside of controller
 	return {
 		pages,
 		currentPage,
-		items,
+		users,
 		loading,
 		error,
 		reload, 
@@ -212,6 +233,7 @@ export function useUserController(): UsersController {
 		showNext,
 		pageNumber,
 		onUpdate,
+		onCreate,
 		itemFilters,
 		setItemFiltersState,
 		clearFilters
