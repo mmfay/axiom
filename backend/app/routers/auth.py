@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from app.classes.apiresponse import APIResponse
 from app.services import auth
 from app.services.session import get_current_user
-from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token, SetRoleRequest, SetCompanyRequest
+from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token, SetRoleRequest, SetCompanyRequest, SetDefaultRoleRequest
 from app.services.config import settings
 from app.tables import Sessions
 
@@ -19,12 +19,13 @@ async def login(data: LoginRequest):
     
 	user = await auth.login(data)
 
-	# create a session
+	# create a session, pre-loading the user's default role if set
 	session = Sessions(
 		user_id=user.user_id,
 		email=user.email,
 		company_id=user.default_company_id,
 		tenant_id=user.tenant_id,
+		active_role_id=user.default_role_id,
 		expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
 	)
 
@@ -75,6 +76,10 @@ async def set_company(data: SetCompanyRequest, current_user=Depends(get_current_
 @router.post("/set-role")
 async def set_role(data: SetRoleRequest, current_user=Depends(get_current_user)):
 	return await auth.set_role(current_user, data.role_id)
+
+@router.post("/set-default-role")
+async def set_default_role(data: SetDefaultRoleRequest, current_user=Depends(get_current_user)):
+	return await auth.set_default_role(current_user, data.role_id)
 
 @router.post("/logout")
 def logout():

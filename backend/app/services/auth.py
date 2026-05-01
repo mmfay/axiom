@@ -198,6 +198,7 @@ async def get_me(current_user):
 		"email": current_user.email,
 		"tenant_id": current_user.tenant_id,
 		"company_id": current_user.company_id,
+		"default_role_id": user.default_role_id,
 		"companies": [{ "id": c.id, "name": c.name } for c in companies],
 		"roles": roles,
 		"active_role": active_role,
@@ -216,6 +217,26 @@ async def set_company(current_user, company_id: int):
 	await current_user.update()
 
 	return APIResponse.ok("Active company updated")
+
+async def set_default_role(current_user, role_id: int | None):
+
+	user = await Users.findByUserID(current_user.user_id)
+
+	if not user:
+		APIResponse.not_found("User not found")
+
+	if role_id is not None:
+		role = await Roles.find(role_id)
+		if not role or role.tenant_id != current_user.tenant_id:
+			APIResponse.not_found("Role not found")
+		assignments = await UserRoleAssignments.findByUser(user.id, current_user.tenant_id)
+		if not any(a.role_id == role_id for a in assignments):
+			APIResponse.bad_request("Role not assigned to user")
+
+	user.default_role_id = role_id
+	await user.set_default_role()
+
+	return APIResponse.ok("Default role updated")
 
 async def set_role(current_user, role_id: int):
 
