@@ -3,7 +3,7 @@ from jose import jwt, JWTError
 
 from app.services.config import settings
 from app.services.ctx import set_user, get_user
-from app.tables.Sessions import Sessions, Roles, Permissions, RolePermissions
+from app.tables import Sessions, Roles, Permissions, RolePermissions
 from app.classes.apiresponse import APIResponse
 
 async def get_current_user(request: Request) -> Sessions:

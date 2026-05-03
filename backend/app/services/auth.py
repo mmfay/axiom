@@ -171,10 +171,11 @@ async def get_me():
 
 	session = ctx.get_user()
 
-	companies = await Entities.findByTenant(session.tenant_id)
+	companies = await Entities.findByTenant()
 
 	user = await Users.findByUserID(session.user_id)
-	assignments = await UserRoleAssignments.findByUser(user.id, session.tenant_id)
+
+	assignments = await UserRoleAssignments.findByUser(user.id)
 
 	roles = []
 
@@ -184,13 +185,14 @@ async def get_me():
 			roles.append({ "id": role.id, "name": role.name })
 
 	active_role = None
+
 	active_role_permissions = []
 
 	if session.active_role_id:
 		role = await Roles.find(session.active_role_id)
 		if role:
 			active_role = { "id": role.id, "name": role.name }
-			rp_list = await RolePermissions.findByRole(role.id, session.tenant_id)
+			rp_list = await RolePermissions.findByRole(role.id)
 			for rp in rp_list:
 				permission = await Permissions.find(rp.permission_id)
 				if permission:
@@ -210,15 +212,18 @@ async def get_me():
 	})
 
 async def set_company(company_id: int):
+
 	session = ctx.get_user()
 
-	companies = await Entities.findByTenant(session.tenant_id)
+	companies = await Entities.findByTenant()
+
 	company_ids = {c.id for c in companies}
 
 	if company_id not in company_ids:
 		return APIResponse.bad_request("Company not found in tenant")
 
 	session.company_id = company_id
+
 	await session.update()
 
 	return APIResponse.ok("Active company updated")
@@ -234,9 +239,9 @@ async def set_default_role(role_id: int | None):
 
 	if role_id is not None:
 		role = await Roles.find(role_id)
-		if not role or role.tenant_id != session.tenant_id:
+		if not role:
 			APIResponse.not_found("Role not found")
-		assignments = await UserRoleAssignments.findByUser(user.id, session.tenant_id)
+		assignments = await UserRoleAssignments.findByUser(user.id)
 		if not any(a.role_id == role_id for a in assignments):
 			APIResponse.bad_request("Role not assigned to user")
 
@@ -251,13 +256,15 @@ async def set_role(role_id: int):
 	session = ctx.get_user()
 
 	user = await Users.findByUserID(session.user_id)
-	assignments = await UserRoleAssignments.findByUser(user.id, session.tenant_id)
+
+	assignments = await UserRoleAssignments.findByUser(user.id)
 
 	assigned_role_ids = {a.role_id for a in assignments}
 	if role_id not in assigned_role_ids:
 		return APIResponse.bad_request("Role not assigned to user")
 
 	session.active_role_id = role_id
+	
 	await session.update()
 
 	return APIResponse.ok("Active role updated")

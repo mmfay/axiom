@@ -2,6 +2,7 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
+from app.services.ctx import get_tenant
 
 
 @dataclass
@@ -28,9 +29,6 @@ class RolePermissions(Common):
 		self.tenant_id = tenant_id
 
 	async def insert(self) -> "RolePermissions":
-		"""
-		Assigns a permission to a role
-		"""
 		sql = (
 			SQL()
 				.insert(self.table_name)
@@ -39,14 +37,11 @@ class RolePermissions(Common):
 				.getQuery()
 		)
 
-		await self.execute(sql, self.role_id, self.permission_id, self.tenant_id)
+		await self.execute(sql, self.role_id, self.permission_id, get_tenant())
 
 		return self
 
 	async def delete(self) -> None:
-		"""
-		Removes a permission from a role
-		"""
 		sql = (
 			SQL()
 				.delete(self.table_name)
@@ -56,13 +51,10 @@ class RolePermissions(Common):
 				.getQuery()
 		)
 
-		await self.execute(sql, self.role_id, self.permission_id, self.tenant_id)
+		await self.execute(sql, self.role_id, self.permission_id, get_tenant())
 
 	@classmethod
-	async def findByRole(cls, role_id: int, tenant_id: int, connection=None) -> list["RolePermissions"]:
-		"""
-		Returns all permission assignments for a role
-		"""
+	async def findByRole(cls, role_id: int, connection=None) -> list["RolePermissions"]:
 		temp = cls(connection=connection)
 
 		sql = (
@@ -72,15 +64,12 @@ class RolePermissions(Common):
 			.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, role_id, tenant_id)
+		rows = await temp.fetch_all(sql, role_id, get_tenant())
 
 		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
-	async def findByPermission(cls, permission_id: int, tenant_id: int, connection=None) -> list["RolePermissions"]:
-		"""
-		Returns all role assignments for a permission
-		"""
+	async def findByPermission(cls, permission_id: int, connection=None) -> list["RolePermissions"]:
 		temp = cls(connection=connection)
 
 		sql = (
@@ -90,6 +79,6 @@ class RolePermissions(Common):
 			.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, permission_id, tenant_id)
+		rows = await temp.fetch_all(sql, permission_id, get_tenant())
 
 		return [cls.from_row(row, connection) for row in rows]

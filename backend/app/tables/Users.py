@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
 from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
+from app.services.ctx import get_tenant, get_company
 from app.classes.appexception import AppException
 
 
@@ -47,11 +48,8 @@ class Users(Common):
 		self.default_company_id = default_company_id
 		self.default_role_id = default_role_id
 
-	#
 	async def insert(self) -> "Users":
-		"""
-		Inserts a record into user table using self properties
-		"""
+		
 		sql = (
 			SQL()
 				.insert(self.table_name)
@@ -61,20 +59,17 @@ class Users(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.email, self.password, self.user_id, self.tenant_id, self.default_company_id)
+		row = await self.fetch_one(sql, self.email, self.password, self.user_id, get_tenant(), get_company())
 
 		if row is None:
-			raise ValueError("Update Failed: No row returned")
-		
+			raise ValueError("Insert Failed: No row returned")
+
 		self.version_id = row["version_id"]
 		self.id = row["id"]
-		
+
 		return self
 
 	async def update(self) -> "Users":
-		"""
-		Updates a record in the user table using self properties
-		"""
 
 		if self.id is None:
 			raise ValueError("User must have an id to update")
@@ -82,50 +77,43 @@ class Users(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("email=$1, password=$2, is_enabled=$3, default_role_id=$4, version_id=$5+1")
-					.where("id = $6 AND version_id = $5")
+					.set("version_id=$2+1, email=$4, password=$5, is_enabled=$6, default_role_id=$7")
+					.where("tenant_id = $1 AND version_id = $2 AND id = $3")
 					.returning()
 				.getQuery()
 		)
-		
-		row = await self.fetch_one(sql, self.email, self.password, self.is_enabled, self.default_role_id, self.version_id, self.id)
+
+		row = await self.fetch_one(sql, get_tenant(), self.version_id, self.id, self.email, self.password, self.is_enabled, self.default_role_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
-		
-		# Make a method to update fields that are based on modified
+
 		self.version_id = row["version_id"]
-		
+
 		return self
 
 	@classmethod
 	async def find(cls, id: int, connection=None) -> "Users | None":
-		"""
-		Finds a record in user table by record id
-		"""
 
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("id = $1")
+				.where("tenant_id = $1")
+				.where("id = $2")
 			.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, id)
-		
-		if row is None: 
+		row = await temp.fetch_one(sql, get_tenant(), id)
+
+		if row is None:
 			return None
 
-		# now return a User or List of Users
 		return cls.from_row(row, connection)
 
 	@classmethod
-	async def findByEmail(cls, email: str, connection=None) -> "Users | None":	
-		"""
-		Finds a record in user table by Email
-		"""
+	async def findByEmail(cls, email: str, connection=None) -> "Users | None":
 
 		temp = cls(connection=connection)
 
@@ -137,41 +125,34 @@ class Users(Common):
 		)
 
 		row = await temp.fetch_one(sql, email)
-		
-		if row is None: 
+
+		if row is None:
 			return None
 
-		# now return a User or List of Users
 		return cls.from_row(row, connection)
-	
+
 	@classmethod
 	async def findByUserID(cls, user_id: str, connection=None) -> "Users | None":
-		"""
-		Finds a record in user table by UserID
-		"""
-
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("user_id = $1")
+				.where("tenant_id = $1")
+				.where("user_id = $2")
 			.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, user_id)
+		row = await temp.fetch_one(sql, get_tenant(), user_id)
 
 		if row is None:
 			return None
 
-		# now return a User or List of Users
 		return cls.from_row(row, connection)
 
 	@classmethod
-	async def findByTenant(cls, tenant_id: int, connection=None) -> list["Users"]:
-		"""
-		Returns all users for a tenant.
-		"""
+	async def findByTenant(cls, connection=None) -> list["Users"]:
+
 		temp = cls(connection=connection)
 
 		sql = (
@@ -181,25 +162,15 @@ class Users(Common):
 			.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, tenant_id)
+		rows = await temp.fetch_all(sql, get_tenant())
 
 		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
-	async def getUserPagination(cls, tenant_id: int, cursor: str | None = None, connection=None) -> CursorPage:
-		"""
-		Cursor pagination (forward) using users.id.
-		- cursor encodes the last seen id
-		- returns up to `limit` items
-		"""
-		
+	async def getUserPagination(cls, cursor: str | None = None, connection=None) -> CursorPage:
+
 		temp = cls(connection=connection)
-
-		# get the users settings lines per page
-		# default to 25 for now
-		page_lines = 2
-
-		tenant = tenant_id
+		page_lines = 25
 
 		last_id = 0
 		if cursor:
@@ -209,7 +180,6 @@ class Users(Common):
 			except Exception:
 				raise AppException(400, "Invalid cursor")
 
-		# Fetch limit + 1 to know if there is another page
 		sql = (
 			SQL()
 				.select(cls.table_name)
@@ -221,9 +191,8 @@ class Users(Common):
 				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, tenant, last_id, page_lines + 1)
+		rows = await temp.fetch_all(sql, get_tenant(), last_id, page_lines + 1)
 
-		# Determine has_more by over-fetching
 		has_more = len(rows) > page_lines
 		rows = rows[:page_lines]
 
@@ -231,7 +200,6 @@ class Users(Common):
 
 		next_cursor = None
 		if has_more:
-			# cursor points to the last item in this page
 			next_cursor = encode_cursor({"id": dict(rows[-1])["id"]})
 
-		return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)   
+		return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)

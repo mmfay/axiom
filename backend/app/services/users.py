@@ -1,10 +1,10 @@
 from app.tables import Users, Roles, UserRoleAssignments
 from app.classes.apiresponse import APIResponse
 from app.services.auth import hash_password
-from app.services import ctx
+from app.services.ctx import get_tenant
+
 
 async def create_user(data):
-	user = ctx.get_user()
 
 	existing_email = await Users.findByEmail(data.email)
 	if existing_email:
@@ -18,7 +18,6 @@ async def create_user(data):
 		email=data.email,
 		user_id=data.user_id,
 		password=hash_password(data.password),
-		tenant_id=user.tenant_id,
 		is_enabled=True,
 	)
 
@@ -33,14 +32,13 @@ async def create_user(data):
 
 
 async def update_user(rec_id: int, data):
-	user = ctx.get_user()
 
 	target = await Users.find(rec_id)
 
 	if not target:
 		APIResponse.not_found("User not found")
 
-	if target.tenant_id != user.tenant_id:
+	if target.tenant_id != get_tenant():
 		APIResponse.forbidden("User does not belong to your tenant")
 
 	if data.email is not None:
@@ -61,17 +59,18 @@ async def update_user(rec_id: int, data):
 		"is_enabled": target.is_enabled,
 	})
 
+
 async def get_user_roles(rec_id: int):
-	user = ctx.get_user()
 
 	target = await Users.find(rec_id)
+
 	if not target:
 		APIResponse.not_found("User not found")
-	if target.tenant_id != user.tenant_id:
+	if target.tenant_id != get_tenant():
 		APIResponse.forbidden("User does not belong to your tenant")
 
-	all_roles = await Roles.findByTenant(user.tenant_id)
-	assignments = await UserRoleAssignments.findByUser(rec_id, user.tenant_id)
+	all_roles = await Roles.findByTenant()
+	assignments = await UserRoleAssignments.findByUser(rec_id)
 	assigned_ids = {a.role_id for a in assignments}
 
 	assigned = [{"id": r.id, "name": r.name, "description": r.description} for r in all_roles if r.id in assigned_ids]
@@ -81,46 +80,50 @@ async def get_user_roles(rec_id: int):
 
 
 async def add_user_role(rec_id: int, role_id: int):
-	user = ctx.get_user()
 
 	target = await Users.find(rec_id)
+
 	if not target:
 		APIResponse.not_found("User not found")
-	if target.tenant_id != user.tenant_id:
+	if target.tenant_id != get_tenant():
 		APIResponse.forbidden("User does not belong to your tenant")
 
 	target_role = await Roles.find(role_id)
-	if not target_role or target_role.tenant_id != user.tenant_id:
+
+	if not target_role:
 		APIResponse.not_found("Role not found")
 
-	assignments = await UserRoleAssignments.findByUser(rec_id, user.tenant_id)
+	assignments = await UserRoleAssignments.findByUser(rec_id)
+
 	if any(a.role_id == role_id for a in assignments):
 		APIResponse.bad_request("Role already assigned to user")
 
-	assignment = UserRoleAssignments(user_id=rec_id, role_id=role_id, tenant_id=user.tenant_id)
+	assignment = UserRoleAssignments(user_id=rec_id, role_id=role_id)
+
 	await assignment.insert()
 
 	return APIResponse.ok("Role assigned")
 
 
 async def remove_user_role(rec_id: int, role_id: int):
-	user = ctx.get_user()
 
 	target = await Users.find(rec_id)
+
 	if not target:
 		APIResponse.not_found("User not found")
-	if target.tenant_id != user.tenant_id:
+	if target.tenant_id != get_tenant():
 		APIResponse.forbidden("User does not belong to your tenant")
 
 	assignment = UserRoleAssignments(user_id=rec_id, role_id=role_id)
+
 	await assignment.delete()
 
 	return APIResponse.ok("Role removed")
 
 
 async def get_users_list_page(cursor: str | None = None):
-	user = ctx.get_user()
-	page = await Users.getUserPagination(user.tenant_id, cursor)
+
+	page = await Users.getUserPagination(cursor)
 
 	return APIResponse.ok("Users fetched", {
 		"items": [

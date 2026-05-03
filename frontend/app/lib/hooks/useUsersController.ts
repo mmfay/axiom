@@ -6,6 +6,7 @@ import { createUser, getUsersListPage, updateUsers } from "../api/users";
 import { addUserRole, getUserRoles, removeUserRole } from "../api/permissions";
 import { UserRolesData, Users, UsersCreate, UsersPatch } from "../types/users";
 import { CachedPage, FilterSet } from "../types/data";
+import { ApiResponse } from "../api/response";
 
 export type UsersController = {
 	pages: CachedPage<Users>[];
@@ -67,7 +68,7 @@ export function useUserController(): UsersController {
 		setError(null);
 
 		try {
-			const res = await getUsersListPage();
+			const res = ApiResponse.handle(await getUsersListPage());
 
 			if (!res.ok || !res.data) {
 				setError(res.message);
@@ -117,7 +118,7 @@ export function useUserController(): UsersController {
 		setError(null);
 
 		try {
-			const res = await getUsersListPage(currentPage.next_cursor ?? undefined);
+			const res = ApiResponse.handle(await getUsersListPage(currentPage.next_cursor ?? undefined));
 
 			if (!res.ok || !res.data) {
 				setError(res.message);
@@ -182,7 +183,7 @@ export function useUserController(): UsersController {
 
 			setError(null);
 
-			const res = await updateUsers(recID, patch);
+			const res = ApiResponse.handle(await updateUsers(recID, patch));
 
 			if (!res.ok || !res.data) {
 				throw new Error(res.message ?? "Failed to update user");
@@ -208,7 +209,7 @@ export function useUserController(): UsersController {
 		async (data: UsersCreate): Promise<Users> => {
 			setError(null);
 
-			const res = await createUser(data);
+			const res = ApiResponse.handle(await createUser(data));
 
 			if (!res.ok || !res.data) {
 				throw new Error(res.message ?? "Failed to create user");
@@ -224,18 +225,18 @@ export function useUserController(): UsersController {
 	);
 
 	const onGetRoles = useCallback(async (userId: number): Promise<UserRolesData> => {
-		const res = await getUserRoles(userId);
+		const res = ApiResponse.handle(await getUserRoles(userId));
 		if (!res.ok || !res.data) throw new Error(res.message ?? "Failed to fetch roles");
 		return res.data;
 	}, []);
 
 	const onAddRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
-		const res = await addUserRole(userId, roleId);
+		const res = ApiResponse.handle(await addUserRole(userId, roleId));
 		if (!res.ok) throw new Error(res.message ?? "Failed to add role");
 	}, []);
 
 	const onRemoveRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
-		const res = await removeUserRole(userId, roleId);
+		const res = ApiResponse.handle(await removeUserRole(userId, roleId));
 		if (!res.ok) throw new Error(res.message ?? "Failed to remove role");
 	}, []);
 
