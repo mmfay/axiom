@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from jose import jwt 
+from jose import jwt
 from datetime import datetime, timedelta, timezone
 from app.classes.apiresponse import APIResponse
 from app.services import auth
@@ -11,12 +11,12 @@ from app.tables import Sessions
 router = APIRouter()
 
 @router.get("/me")
-async def get_me(current_user=Depends(get_current_user)):
-	return await auth.get_me(current_user)
+async def get_me(_=Depends(get_current_user)):
+	return await auth.get_me()
 
 @router.post("/login")
 async def login(data: LoginRequest):
-    
+
 	user = await auth.login(data)
 
 	# create a session, pre-loading the user's default role if set
@@ -54,12 +54,11 @@ async def login(data: LoginRequest):
 
 @router.post("/signup")
 async def signup(data: SignupRequest):
-    return await auth.signup(data)
+	return await auth.signup(data)
 
 @router.post("/forgot-password")
 async def forgotPassword(data: UserEmail):
 	return await auth.forgotPassword(data)
-
 
 @router.post("/reset-password")
 async def resetPassword(data: ResetPassword):
@@ -70,25 +69,27 @@ async def verifyAccount(data: Token):
 	return await auth.verifyAccount(data)
 
 @router.post("/set-company")
-async def set_company(data: SetCompanyRequest, current_user=Depends(get_current_user)):
-	return await auth.set_company(current_user, data.company_id)
+async def set_company(data: SetCompanyRequest, _=Depends(get_current_user)):
+	return await auth.set_company(data.company_id)
 
 @router.post("/set-role")
-async def set_role(data: SetRoleRequest, current_user=Depends(get_current_user)):
-	return await auth.set_role(current_user, data.role_id)
+async def set_role(data: SetRoleRequest, _=Depends(get_current_user)):
+	return await auth.set_role(data.role_id)
 
 @router.post("/set-default-role")
-async def set_default_role(data: SetDefaultRoleRequest, current_user=Depends(get_current_user)):
-	return await auth.set_default_role(current_user, data.role_id)
+async def set_default_role(data: SetDefaultRoleRequest, _=Depends(get_current_user)):
+	return await auth.set_default_role(data.role_id)
 
 @router.post("/logout")
 def logout():
 
 	res = APIResponse.ok("Logged out")
+
 	res.delete_cookie(
 		key="sid",
 		httponly=True,
 		secure=False,
 		samesite="lax",
 	)
+
 	return res
