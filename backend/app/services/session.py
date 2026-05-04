@@ -45,18 +45,18 @@ def require_permission(permission: str | None = None):
 		if not role:
 			APIResponse.forbidden("No active role")
 
-		if role.name == "sys_admin":
+		if role.name == "sysadmin":
 			return
 
 		if permission is None:
-			APIResponse.forbidden("Requires 'sys_admin' role")
+			APIResponse.forbidden("Requires 'sysadmin' role")
 
 		perm = await Permissions.findByName(permission)
 
 		if not perm:
 			APIResponse.forbidden(f"Unknown permission '{permission}'")
 
-		assignments = await RolePermissions.findByRole(role.id, session.tenant_id)
+		assignments = await RolePermissions.findByRole(role.id)
 
 		if not any(a.permission_id == perm.id for a in assignments):
 			APIResponse.forbidden(f"Requires '{permission}' permission")
