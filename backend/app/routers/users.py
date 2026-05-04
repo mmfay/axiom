@@ -9,6 +9,10 @@ router = APIRouter()
 async def create_user(data: CreateUserRequest, _=Depends(require_permission())):
 	return await users.create_user(data)
 
+@router.delete("/{rec_id}")
+async def delete_user(rec_id: int, _=Depends(require_permission())):
+	return await users.delete_user(rec_id)
+
 @router.patch("/{rec_id}")
 async def update_user(rec_id: int, data: UpdateUserRequest, _=Depends(require_permission())):
 	return await users.update_user(rec_id, data)
@@ -26,5 +30,11 @@ async def remove_user_role(rec_id: int, role_id: int, _=Depends(require_permissi
 	return await users.remove_user_role(rec_id, role_id)
 
 @router.get("/listPage")
-async def get_users_list_page(cursor: str | None = None, _=Depends(require_permission())):
-	return await users.get_users_list_page(cursor)
+async def get_users_list_page(
+	cursor: str | None = None,
+	email: str | None = None,
+	user_id: str | None = None,
+	is_enabled: bool | None = None,
+	_=Depends(require_permission()),
+):
+	return await users.get_users_list_page(cursor, email=email, user_id=user_id, is_enabled=is_enabled)

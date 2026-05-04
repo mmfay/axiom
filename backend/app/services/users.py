@@ -121,9 +121,19 @@ async def remove_user_role(rec_id: int, role_id: int):
 	return APIResponse.ok("Role removed")
 
 
-async def get_users_list_page(cursor: str | None = None):
+async def delete_user(rec_id: int):
+	target = await Users.find(rec_id)
+	if not target:
+		APIResponse.not_found("User not found")
 
-	page = await Users.getUserPagination(cursor)
+	await target.delete()
+
+	return APIResponse.ok("User deleted")
+
+
+async def get_users_list_page(cursor: str | None = None, email: str | None = None, user_id: str | None = None, is_enabled: bool | None = None):
+
+	page = await Users.getUserPagination(cursor, email=email, user_id=user_id, is_enabled=is_enabled)
 
 	return APIResponse.ok("Users fetched", {
 		"items": [

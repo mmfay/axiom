@@ -2,27 +2,42 @@
 
 import { useState } from "react";
 
+export type FilterField = {
+	id: string;
+	label: string;
+	type: "text" | "boolean";
+};
+
 export type FilterController = {
 	open: boolean;
 	onOpen: () => void;
 	onClose: () => void;
-}
-export function useFilterController(): FilterController {
+	fields: FilterField[];
+	filters: Record<string, string>;
+	activeCount: number;
+	onApply: (next: Record<string, string>) => void;
+	onClear: () => void;
+};
 
+export function useFilterController(fields: FilterField[]): FilterController {
+	
 	const [open, setOpen] = useState(false);
+	const [filters, setFilters] = useState<Record<string, string>>({});
 
-	function onOpen() {
-		setOpen(true);
-	}
+	const activeCount = Object.values(filters).filter(Boolean).length;
 
-	function onClose() {
+	function onOpen() { setOpen(true); }
+	function onClose() { setOpen(false); }
+
+	function onApply(next: Record<string, string>) {
+		setFilters(next);
 		setOpen(false);
 	}
 
-	// make accessible outside of controller
-	return {
-		open,
-		onOpen,
-		onClose
-	};
+	function onClear() {
+		setFilters({});
+		setOpen(false);
+	}
+
+	return { open, onOpen, onClose, fields, filters, activeCount, onApply, onClear };
 }

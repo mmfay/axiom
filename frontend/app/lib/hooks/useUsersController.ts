@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createUser, getUsersListPage, updateUsers } from "../api/users";
+import { createUser, deleteUser, getUsersListPage, updateUsers } from "../api/users";
 import { addUserRole, getUserRoles, removeUserRole } from "../api/permissions";
 import { UserRolesData, Users, UsersCreate, UsersPatch } from "../types/users";
 import { CachedPage, FilterSet } from "../types/data";
@@ -22,6 +22,7 @@ export type UsersController = {
 	pageNumber: number;
 	onUpdate: (recID: number, patch: UsersPatch) => Promise<Users>;
 	onCreate: (data: UsersCreate) => Promise<Users>;
+	onDelete: (recID: number) => Promise<void>;
 	onGetRoles: (userId: number) => Promise<UserRolesData>;
 	onAddRole: (userId: number, roleId: number) => Promise<void>;
 	onRemoveRole: (userId: number, roleId: number) => Promise<void>;
@@ -68,7 +69,8 @@ export function useUserController(): UsersController {
 		setError(null);
 
 		try {
-			const res = ApiResponse.handle(await getUsersListPage());
+
+			const res = ApiResponse.handle(await getUsersListPage(activeFilters));
 
 			if (!res.ok || !res.data) {
 				setError(res.message);
@@ -118,7 +120,8 @@ export function useUserController(): UsersController {
 		setError(null);
 
 		try {
-			const res = ApiResponse.handle(await getUsersListPage(currentPage.next_cursor ?? undefined));
+
+			const res = ApiResponse.handle(await getUsersListPage(itemFilters, currentPage.next_cursor ?? undefined));
 
 			if (!res.ok || !res.data) {
 				setError(res.message);
@@ -143,7 +146,7 @@ export function useUserController(): UsersController {
 			setLoading(false);
 		}
 
-	}, [currentPage, pages, pageIndex]);
+	}, [currentPage, pages, pageIndex, itemFilters]);
 
 	// gets new data
 	const prevPage = useCallback(() => {
@@ -224,20 +227,42 @@ export function useUserController(): UsersController {
 		
 	);
 
+	const onDelete = useCallback(async (recID: number): Promise<void> => {
+
+		const res = ApiResponse.handle(await deleteUser(recID));
+
+		if (!res.ok) throw new Error(res.message ?? "Failed to delete user");
+
+		setPages((prev) =>
+			prev.map((p) => ({ ...p, items: p.items.filter((u) => u.id !== recID) }))
+		);
+
+	}, []);
+
 	const onGetRoles = useCallback(async (userId: number): Promise<UserRolesData> => {
+
 		const res = ApiResponse.handle(await getUserRoles(userId));
+
 		if (!res.ok || !res.data) throw new Error(res.message ?? "Failed to fetch roles");
+
 		return res.data;
+
 	}, []);
 
 	const onAddRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
+
 		const res = ApiResponse.handle(await addUserRole(userId, roleId));
+
 		if (!res.ok) throw new Error(res.message ?? "Failed to add role");
+
 	}, []);
 
 	const onRemoveRole = useCallback(async (userId: number, roleId: number): Promise<void> => {
+
 		const res = ApiResponse.handle(await removeUserRole(userId, roleId));
+
 		if (!res.ok) throw new Error(res.message ?? "Failed to remove role");
+		
 	}, []);
 
 	// make accessible outside of controller
@@ -255,6 +280,7 @@ export function useUserController(): UsersController {
 		pageNumber,
 		onUpdate,
 		onCreate,
+		onDelete,
 		onGetRoles,
 		onAddRole,
 		onRemoveRole,

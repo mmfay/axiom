@@ -92,6 +92,18 @@ class Users(Common):
 
 		return self
 
+	async def delete(self) -> None:
+
+		sql = (
+			SQL()
+				.delete(self.table_name)
+					.where("tenant_id = $1")
+					.where("id = $2")
+				.getQuery()
+		)
+
+		await self.execute(sql, get_tenant(), self.id)
+
 	@classmethod
 	async def find(cls, id: int, connection=None) -> "Users | None":
 
@@ -167,12 +179,14 @@ class Users(Common):
 		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
-	async def getUserPagination(cls, cursor: str | None = None, connection=None) -> CursorPage:
+	async def getUserPagination(cls, cursor: str | None = None, email: str | None = None, user_id: str | None = None, is_enabled: bool | None = None, connection=None) -> CursorPage:
 
 		temp = cls(connection=connection)
-		page_lines = 25
+
+		page_lines = 2
 
 		last_id = 0
+		
 		if cursor:
 			try:
 				payload = decode_cursor(cursor)
@@ -180,18 +194,32 @@ class Users(Common):
 			except Exception:
 				raise AppException(400, "Invalid cursor")
 
-		sql = (
+		params: list = [get_tenant(), last_id]
+
+		builder = (
 			SQL()
 				.select(cls.table_name)
 				.columns("email", "user_id", "id", "is_enabled")
 				.where("tenant_id = $1")
 				.where("id > $2")
-				.order_by("id")
-				.limit("$3")
-				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), last_id, page_lines + 1)
+		if email:
+			params.append(f"%{email}%")
+			builder.where(f"email ILIKE ${len(params)}")
+
+		if user_id:
+			params.append(f"%{user_id}%")
+			builder.where(f"user_id ILIKE ${len(params)}")
+
+		if is_enabled is not None:
+			params.append(is_enabled)
+			builder.where(f"is_enabled = ${len(params)}")
+
+		params.append(page_lines + 1)
+		sql = builder.order_by("id").limit(f"${len(params)}").getQuery()
+
+		rows = await temp.fetch_all(sql, *params)
 
 		has_more = len(rows) > page_lines
 		rows = rows[:page_lines]
