@@ -13,6 +13,7 @@ class Sessions(Common):
 	email: Optional[str] = None
 	tenant_id: Optional[int] = None
 	company_id: Optional[int] = None
+	active_role_id: Optional[int] = None
 	created_at: Optional[str] = None
 	expires_at: Optional[str] = None
 	is_active: Optional[bool] = None
@@ -27,6 +28,7 @@ class Sessions(Common):
 		email: Optional[str] = None,
 		tenant_id: Optional[int] = None,
 		company_id: Optional[int] = None,
+		active_role_id: Optional[int] = None,
 		created_at: Optional[str] = None,
 		expires_at: Optional[str] = None,
 		is_active: Optional[bool] = None,
@@ -38,6 +40,7 @@ class Sessions(Common):
 		self.email = email
 		self.tenant_id = tenant_id
 		self.company_id = company_id
+		self.active_role_id = active_role_id
 		self.created_at = created_at
 		self.expires_at = expires_at
 		self.is_active = is_active
@@ -49,13 +52,13 @@ class Sessions(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("user_id, email, tenant_id, company_id, expires_at")
-            		.values("$1, $2, $3, $4, $5")
+					.fields("user_id, email, tenant_id, company_id, active_role_id, expires_at")
+            		.values("$1, $2, $3, $4, $5, $6")
 					.returning()
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.expires_at)
+		row = await self.fetch_one(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.active_role_id, self.expires_at)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -75,17 +78,17 @@ class Sessions(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("company_id = $1")
-					.where("id = $2 AND tenant_id = $3")
+					.set("company_id = $1, active_role_id = $2")
+					.where("id = $3 AND tenant_id = $4")
 					.returning()
 				.getQuery()
 		)
-		
-		row = await self.fetch_one(sql, self.company_id, self.id, self.tenant_id)
+
+		row = await self.fetch_one(sql, self.company_id, self.active_role_id, self.id, self.tenant_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
-		
+
 		return self
 
 	@classmethod

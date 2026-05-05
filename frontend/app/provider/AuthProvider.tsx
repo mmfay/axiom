@@ -2,12 +2,34 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me } from "../lib/api/auth";
+import { login, signup, logout, forgotPassword, resetPassword, verifyAccount, me, setRole, setCompany, setDefaultRole } from "../lib/api/auth";
+
+export type Company = {
+	id: number;
+	name: string;
+};
+
+export type Role = {
+	id: number;
+	name: string;
+};
+
+export type Permission = {
+	id: number;
+	name: string;
+};
 
 export type AuthUser = {
 	id: string;
 	user_id: string;
 	email: string;
+	tenant_id: number;
+	company_id: number | null;
+	default_role_id: number | null;
+	companies: Company[];
+	roles: Role[];
+	active_role: Role | null;
+	active_role_permissions: Permission[];
 };
 
 export type AuthState = {
@@ -25,6 +47,11 @@ export type AuthContextValue = AuthState & {
 	handleForgotPassword: (email: string) => Promise<void>;
 	handleResetPassword: (newPassword: string, token: string) => Promise<void>;
 	handleVerifyAccount: (token: string) => Promise<void>;
+	handleSetActiveRole: (role_id: number) => Promise<void>;
+	handleSetActiveCompany: (company_id: number) => Promise<void>;
+	handleSetDefaultRole: (role_id: number | null) => Promise<void>;
+	hasPermission: (name: string) => boolean;
+	isSysAdmin: boolean;
 	refresh: () => Promise<void>;
 
 };
@@ -184,6 +211,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		
 	};
 
+	// set active company
+	const handleSetActiveCompany = async (company_id: number) => {
+
+		try {
+
+			const res = await setCompany({ company_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
+	// set default role
+	const handleSetDefaultRole = async (role_id: number | null) => {
+
+		try {
+
+			const res = await setDefaultRole({ role_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
+	// set active role
+	const handleSetActiveRole = async (role_id: number) => {
+
+		try {
+
+			const res = await setRole({ role_id });
+
+			if (!res.ok) {
+				setError(res.message);
+				return;
+			}
+
+			await refresh();
+
+		} finally {
+
+			setLoading(false);
+
+		}
+
+	};
+
 	// verify account
 	const handleVerifyAccount = async (token: string) => {
 		
@@ -194,7 +287,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const res = await verifyAccount({ token })
 
 			if (!res.ok) {
-				alert("hey");
 				return;
 			}
 
@@ -208,19 +300,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		
 	};
 
+	const isSysAdmin = user?.active_role?.name === "sysadmin";
+
+	const hasPermission = (name: string) =>
+		isSysAdmin || (user?.active_role_permissions.some(p => p.name === name) ?? false);
+
 	const value: AuthContextValue = useMemo(() => (
-		{ 
-			isAuth, 
-			user, 
-			error, 
-			loading, 
-			handleLogin, 
-			handleSignup, 
-			handleLogout, 
-			handleForgotPassword, 
-			handleResetPassword, 
+		{
+			isAuth,
+			user,
+			error,
+			loading,
+			handleLogin,
+			handleSignup,
+			handleLogout,
+			handleForgotPassword,
+			handleResetPassword,
 			handleVerifyAccount,
-			refresh 
+			handleSetActiveRole,
+			handleSetActiveCompany,
+			handleSetDefaultRole,
+			hasPermission,
+			isSysAdmin,
+			refresh
 		}),
 		[isAuth, user, error, loading]
 	);
