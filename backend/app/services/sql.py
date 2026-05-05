@@ -25,6 +25,12 @@ class SQL:
 		# RETURNING clause (Postgres-specific)
 		self._returning = None
 
+		# ORDER BY clause
+		self._order_by = None
+
+		# LIMIT clause
+		self._limit = None
+
 	def select(self, table_name: str):
 		# Initialize SELECT query
 		self._action = "SELECT"
@@ -76,6 +82,14 @@ class SQL:
 		self._where.append(condition)
 		return self
 
+	def order_by(self, column: str):
+		self._order_by = column
+		return self
+
+	def limit(self, placeholder: str):
+		self._limit = placeholder
+		return self
+
 	def returning(self, *columns):
 		# Add RETURNING clause (defaults to all columns if none specified)
 		self._returning = ", ".join(columns) if columns else "*"
@@ -111,6 +125,14 @@ class SQL:
 		# Append WHERE conditions if present
 		if self._where:
 			query += " WHERE " + " AND ".join(self._where)
+
+		# Append ORDER BY clause if specified
+		if self._order_by:
+			query += f" ORDER BY {self._order_by}"
+
+		# Append LIMIT clause if specified
+		if self._limit:
+			query += f" LIMIT {self._limit}"
 
 		# Append RETURNING clause if specified
 		if self._returning:

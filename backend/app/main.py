@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.db import db
-from app.routers import auth, users
+from app.routers import auth, users, roles
 from app.classes.appexception import AppException
 from app.classes.apiresponse import APIResponse
 
@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
 
 	app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 	app.include_router(users.router, prefix="/users", tags=["Users"])
+	app.include_router(roles.router, prefix="/roles", tags=["Roles"])
 
 	@app.get("/health")
 	async def health():

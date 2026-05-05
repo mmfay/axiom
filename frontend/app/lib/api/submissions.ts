@@ -52,7 +52,7 @@ export async function getJSON<
 		fullUrl += (url.includes("?") ? "&" : "?") + qs.toString();
 	}
 
-	const res = await fetch(`${API_BASE_URL}${url}`, {
+	const res = await fetch(`${API_BASE_URL}${fullUrl}`, {
 		method: "GET",
 		credentials: "include",
 		headers: { Accept: "application/json" },
@@ -96,7 +96,7 @@ export async function deleteJSON<
 		fullUrl += (url.includes("?") ? "&" : "?") + qs.toString();
 	}
 
-	const res = await fetch(fullUrl, {
+	const res = await fetch(`${API_BASE_URL}${fullUrl}`, {
 		method: "DELETE",
 		credentials: "include",
 		headers: { Accept: "application/json" },
@@ -130,7 +130,7 @@ export async function patchJSON<
 	body?: TBody
 ): Promise<APIResult<TData>> {
 
-	const res = await fetch(url, {
+	const res = await fetch(`${API_BASE_URL}${url}`, {
 		method: "PATCH",
 		headers: { "Content-Type": "application/json" },
 		credentials: "include",

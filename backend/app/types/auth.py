@@ -16,9 +16,24 @@ class LoginRequest(UserEmail):
 class SignupRequest(UserEmail):
     user_id: str
     password: str = Field(min_length=6)
-    first_name: str
-    last_name: str
     
 class ResetPassword(BaseModel):
     token: str
     password: str
+
+class SetRoleRequest(BaseModel):
+    role_id: int
+
+class SetCompanyRequest(BaseModel):
+    company_id: int
+
+class SetDefaultRoleRequest(BaseModel):
+    role_id: int | None = None
+
+class CreateUserRequest(UserEmail):
+	user_id: str
+	password: str = Field(min_length=6)
+
+class UpdateUserRequest(BaseModel):
+	email: EmailStr | None = None
+	is_enabled: bool | None = None

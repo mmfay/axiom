@@ -2,10 +2,12 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
+from app.services.ctx import get_tenant
+
 
 @dataclass
 class Entities(Common):
-    
+
 	# table fields
 	id: Optional[int] = None
 	tenant_id: Optional[int] = None
@@ -15,7 +17,7 @@ class Entities(Common):
 
 	# table name
 	table_name = "entities"
-	
+
 	def __init__(
 		self,
 		id: Optional[int] = None,
@@ -33,33 +35,29 @@ class Entities(Common):
 		self.is_active = is_active
 
 	async def insert(self) -> "Entities":
-		"""
-		Inserts a record into entity table using self properties
-		"""
+
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("name, tenant_id")
-            		.values("$1, $2")
+					.fields("tenant_id, name")
+					.values("$1, $2")
 					.returning()
 				.getQuery()
 		)
-		
-		row = await self.fetch_one(sql, self.name, self.tenant_id)
+
+		row = await self.fetch_one(sql, get_tenant(), self.name)
 
 		if row is None:
-			raise ValueError("Update Failed: No row returned")
-		
+			raise ValueError("Insert Failed: No row returned")
+
 		self.id = row["id"]
+		self.tenant_id = row["tenant_id"]
 		self.created_at = row["created_at"]
 		self.is_active = row["is_active"]
-		
+
 		return self
 
 	async def update(self) -> "Entities":
-		"""
-		Updates a record in the entity table using self properties
-		"""
 
 		if self.id is None:
 			raise ValueError("Entity must have an id to update")
@@ -67,25 +65,37 @@ class Entities(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("name = $1, tenant_id = $2, is_active = $3")
+					.set("tenant_id = $1, name = $2, is_active = $3")
 					.where("id = $4")
 					.returning()
 				.getQuery()
 		)
-		
-		row = await self.fetch_one(sql, self.name, self.tenant_id, self.is_active, self.id)
+
+		row = await self.fetch_one(sql, self.tenant_id, self.name, self.is_active, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
-		
+
 		return self
 
 	@classmethod
-	async def find(cls, id: int, connection=None) -> "Entities | None":	
-		"""
-		Finds a record in entity table by record id
-		"""
+	async def findByTenant(cls, connection=None) -> list["Entities"]:
+		temp = cls(connection=connection)
 
+		sql = (
+			SQL()
+				.select(cls.table_name)
+				.where("tenant_id = $1")
+				.where("is_active = TRUE")
+			.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, get_tenant())
+
+		return [cls.from_row(row, connection) for row in rows]
+
+	@classmethod
+	async def find(cls, id: int, connection=None) -> "Entities | None":
 		temp = cls(connection=connection)
 
 		sql = (
@@ -96,9 +106,8 @@ class Entities(Common):
 		)
 
 		row = await temp.fetch_one(sql, id)
-		
-		if row is None: 
+
+		if row is None:
 			return None
 
-		# now return a Entity or List of Entities
 		return cls.from_row(row, connection)

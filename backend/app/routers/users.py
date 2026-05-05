@@ -1,28 +1,40 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.services import users
+from app.services.session import require_permission
+from app.types.auth import CreateUserRequest, UpdateUserRequest
 
 router = APIRouter()
 
-FAKE_USERS = [
-    {"id": 1, "username": "matt", "email": "matt@example.com", "is_active": True},
-    {"id": 2, "username": "admin", "email": "admin@example.com", "is_active": True},
-]
+@router.post("")
+async def create_user(data: CreateUserRequest, _=Depends(require_permission())):
+	return await users.create_user(data)
 
+@router.delete("/{rec_id}")
+async def delete_user(rec_id: int, _=Depends(require_permission())):
+	return await users.delete_user(rec_id)
 
-@router.get("/")
-def list_users():
-    return FAKE_USERS
+@router.patch("/{rec_id}")
+async def update_user(rec_id: int, data: UpdateUserRequest, _=Depends(require_permission())):
+	return await users.update_user(rec_id, data)
 
+@router.get("/{rec_id}/roles")
+async def get_user_roles(rec_id: int, _=Depends(require_permission())):
+	return await users.get_user_roles(rec_id)
 
-@router.get("/{user_id}")
-def get_user(user_id: int):
-    for user in FAKE_USERS:
-        if user["id"] == user_id:
-            return user
-    return {"message": "User not found"}
+@router.post("/{rec_id}/roles/{role_id}")
+async def add_user_role(rec_id: int, role_id: int, _=Depends(require_permission())):
+	return await users.add_user_role(rec_id, role_id)
 
+@router.delete("/{rec_id}/roles/{role_id}")
+async def remove_user_role(rec_id: int, role_id: int, _=Depends(require_permission())):
+	return await users.remove_user_role(rec_id, role_id)
 
-@router.post("/")
-def create_user():
-    return {
-        "message": "Create user endpoint placeholder"
-    }
+@router.get("/listPage")
+async def get_users_list_page(
+	cursor: str | None = None,
+	email: str | None = None,
+	user_id: str | None = None,
+	is_enabled: bool | None = None,
+	_=Depends(require_permission()),
+):
+	return await users.get_users_list_page(cursor, email=email, user_id=user_id, is_enabled=is_enabled)
