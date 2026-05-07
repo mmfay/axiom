@@ -205,6 +205,7 @@ async def get_me():
 		"tenant_id": session.tenant_id,
 		"company_id": session.company_id,
 		"default_role_id": user.default_role_id,
+		"default_company_id": user.default_company_id,
 		"companies": [{ "id": c.id, "name": c.name } for c in companies],
 		"roles": roles,
 		"active_role": active_role,
@@ -250,6 +251,26 @@ async def set_default_role(role_id: int | None):
 	await user.update()
 
 	return APIResponse.ok("Default role updated")
+
+async def set_default_company(company_id: int | None):
+
+	session = ctx.get_user()
+
+	user = await Users.findByUserID(session.user_id)
+
+	if not user:
+		APIResponse.not_found("User not found")
+
+	if company_id is not None:
+		companies = await Entities.findByTenant()
+		if not any(c.id == company_id for c in companies):
+			APIResponse.bad_request("Company not found in tenant")
+
+	user.default_company_id = company_id
+
+	await user.update()
+
+	return APIResponse.ok("Default company updated")
 
 async def set_role(role_id: int):
 
