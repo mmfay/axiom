@@ -1,5 +1,5 @@
 import { getJSON, postJSON } from "./submissions";
-import { LoginRequest, ResetPassword, SetCompanyRequest, SetDefaultRoleRequest, SetRoleRequest, SignupRequest, Token, UserEmail } from "../types/auth";
+import { LoginRequest, ResetPassword, SetCompanyRequest, SetDefaultCompanyRequest, SetDefaultRoleRequest, SetRoleRequest, SignupRequest, Token, UserEmail } from "../types/auth";
 import { APIResult } from "../types/data";
 
 export async function login(body: LoginRequest): Promise<APIResult<null>> {
@@ -40,4 +40,8 @@ export async function setCompany(body: SetCompanyRequest): Promise<APIResult<nul
 
 export async function setDefaultRole(body: SetDefaultRoleRequest): Promise<APIResult<null>> {
 	return postJSON("/auth/set-default-role", body);
+}
+
+export async function setDefaultCompany(body: SetDefaultCompanyRequest): Promise<APIResult<null>> {
+	return postJSON("/auth/set-default-company", body);
 }

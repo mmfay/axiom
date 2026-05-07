@@ -21,3 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_role_permissions_tenant_id ON role_permissions (t
 CREATE INDEX IF NOT EXISTS idx_tokens_user_id    ON tokens (user_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_token_hash ON tokens (token_hash);
 CREATE INDEX IF NOT EXISTS idx_tokens_expires_at ON tokens (expires_at);
+
+-- gl_accounts: tenant+company is the primary lookup partition; account_number searched directly
+CREATE INDEX IF NOT EXISTS idx_gl_accounts_tenant_company    ON gl_accounts (tenant_id, company_id);
+CREATE INDEX IF NOT EXISTS idx_gl_accounts_account_type      ON gl_accounts (tenant_id, company_id, account_type);
+CREATE INDEX IF NOT EXISTS idx_gl_accounts_is_active         ON gl_accounts (tenant_id, company_id, is_active);

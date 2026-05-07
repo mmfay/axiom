@@ -7,6 +7,7 @@ from .Permissions import Permissions
 from .Roles import Roles
 from .RolePermissions import RolePermissions
 from .UserRoleAssignments import UserRoleAssignments
+from .GLAccounts import GLAccounts
 
 __all__ = [
 	"Users",
@@ -18,4 +19,5 @@ __all__ = [
 	"Roles",
 	"RolePermissions",
 	"UserRoleAssignments",
+	"GLAccounts",
 ]

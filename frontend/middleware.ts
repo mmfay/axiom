@@ -36,8 +36,9 @@ export async function middleware(request: NextRequest) {
 		}
 
 		if (path.startsWith("/gl")) {
+			const isSysAdmin = data?.active_role?.name === "sysadmin";
 			const permissions: { name: string }[] = data?.active_role_permissions ?? [];
-			const hasRead = permissions.some((p) => p.name === "General_ledger.Read");
+			const hasRead = isSysAdmin || permissions.some((p) => p.name === "General_ledger.Read");
 			if (!hasRead) {
 				return NextResponse.redirect(new URL("/home", request.url));
 			}

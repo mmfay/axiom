@@ -35,6 +35,10 @@ export interface SetDefaultRoleRequest {
 	role_id: number | null;
 }
 
+export interface SetDefaultCompanyRequest {
+	company_id: number | null;
+}
+
 export interface LoginResponse extends UserEmail {
 	user_id: number;
 	permissions: string[];

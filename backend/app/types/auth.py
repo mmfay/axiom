@@ -30,6 +30,9 @@ class SetCompanyRequest(BaseModel):
 class SetDefaultRoleRequest(BaseModel):
     role_id: int | None = None
 
+class SetDefaultCompanyRequest(BaseModel):
+    company_id: int | None = None
+
 class CreateUserRequest(UserEmail):
 	user_id: str
 	password: str = Field(min_length=6)

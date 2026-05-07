@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from app.classes.apiresponse import APIResponse
 from app.services import auth
 from app.services.session import get_current_user
-from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token, SetRoleRequest, SetCompanyRequest, SetDefaultRoleRequest
+from app.types.auth import LoginRequest, SignupRequest, UserEmail, ResetPassword, Token, SetRoleRequest, SetCompanyRequest, SetDefaultRoleRequest, SetDefaultCompanyRequest
 from app.services.config import settings
 from app.tables import Sessions
 
@@ -79,6 +79,10 @@ async def set_role(data: SetRoleRequest, _=Depends(get_current_user)):
 @router.post("/set-default-role")
 async def set_default_role(data: SetDefaultRoleRequest, _=Depends(get_current_user)):
 	return await auth.set_default_role(data.role_id)
+
+@router.post("/set-default-company")
+async def set_default_company(data: SetDefaultCompanyRequest, _=Depends(get_current_user)):
+	return await auth.set_default_company(data.company_id)
 
 @router.post("/logout")
 def logout():

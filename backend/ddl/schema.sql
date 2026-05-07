@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS permissions;
 DROP TABLE IF EXISTS tokens;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS gl_accounts;
 DROP TABLE IF EXISTS tenants;
 DROP TABLE IF EXISTS entities;
 
@@ -88,4 +89,18 @@ CREATE TABLE IF NOT EXISTS tokens (
 	expires_at TIMESTAMPTZ NOT NULL,
 	used_at TIMESTAMPTZ,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS gl_accounts (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	account_number TEXT NOT NULL,
+	name TEXT NOT NULL,
+	account_type TEXT NOT NULL,
+	normal_balance TEXT NOT NULL CHECK (normal_balance IN ('debit', 'credit')),
+	description TEXT,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (tenant_id, company_id, account_number)
 );
