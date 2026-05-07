@@ -77,13 +77,13 @@ class Users(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("version_id=$2+1, email=$4, password=$5, is_enabled=$6, default_role_id=$7")
+					.set("version_id=$2+1, email=$4, password=$5, is_enabled=$6, default_role_id=$7, default_company_id=$8")
 					.where("tenant_id = $1 AND version_id = $2 AND id = $3")
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), self.version_id, self.id, self.email, self.password, self.is_enabled, self.default_role_id)
+		row = await self.fetch_one(sql, get_tenant(), self.version_id, self.id, self.email, self.password, self.is_enabled, self.default_role_id, self.default_company_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

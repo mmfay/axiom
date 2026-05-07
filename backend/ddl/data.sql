@@ -47,6 +47,10 @@ WHERE u.email = 'matthew.fay@softwarerror.com'
   AND r.tenant_id = 1
 ON CONFLICT DO NOTHING;
 
+UPDATE users
+SET default_role_id = (SELECT id FROM roles WHERE name = 'sysadmin' AND tenant_id = 1)
+WHERE email = 'matthew.fay@softwarerror.com';
+
 INSERT INTO user_role_assignments (user_id, role_id, tenant_id)
 SELECT u.id, r.id, 1
 FROM users u, roles r
