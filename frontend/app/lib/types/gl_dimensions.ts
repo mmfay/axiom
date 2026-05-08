@@ -34,3 +34,7 @@ export interface GLDimensionValuePatch {
 	name?: string;
 	is_active?: boolean;
 }
+
+export interface DimensionWithValues extends GLDimension {
+	values: GLDimensionValue[];
+}
