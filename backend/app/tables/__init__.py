@@ -8,6 +8,10 @@ from .Roles import Roles
 from .RolePermissions import RolePermissions
 from .UserRoleAssignments import UserRoleAssignments
 from .GLAccounts import GLAccounts
+from .GLDimensions import GLDimensions
+from .GLDimensionValues import GLDimensionValues
+from .GLAccountDimensionRules import GLAccountDimensionRules
+from .GLAccountDimensionRuleValues import GLAccountDimensionRuleValues
 
 __all__ = [
 	"Users",
@@ -20,4 +24,8 @@ __all__ = [
 	"RolePermissions",
 	"UserRoleAssignments",
 	"GLAccounts",
+	"GLDimensions",
+	"GLDimensionValues",
+	"GLAccountDimensionRules",
+	"GLAccountDimensionRuleValues",
 ]

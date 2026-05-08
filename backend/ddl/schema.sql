@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS gl_account_dimension_rule_values;
+DROP TABLE IF EXISTS gl_account_dimension_rules;
+DROP TABLE IF EXISTS gl_dimension_values;
+DROP TABLE IF EXISTS gl_dimensions;
 DROP TABLE IF EXISTS user_role_assignments;
 DROP TABLE IF EXISTS role_permissions;
 DROP TABLE IF EXISTS roles;
@@ -103,4 +107,45 @@ CREATE TABLE IF NOT EXISTS gl_accounts (
 	is_active BOOLEAN NOT NULL DEFAULT TRUE,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	UNIQUE (tenant_id, company_id, account_number)
+);
+
+CREATE TABLE IF NOT EXISTS gl_dimensions (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	slot SMALLINT NOT NULL CHECK (slot BETWEEN 1 AND 5),
+	name TEXT NOT NULL,
+	is_active BOOLEAN NOT NULL DEFAULT FALSE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (tenant_id, company_id, slot)
+);
+
+CREATE TABLE IF NOT EXISTS gl_dimension_values (
+	id SERIAL PRIMARY KEY,
+	dimension_id INTEGER NOT NULL REFERENCES gl_dimensions(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	code TEXT NOT NULL,
+	name TEXT NOT NULL,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (dimension_id, code)
+);
+
+CREATE TABLE IF NOT EXISTS gl_account_dimension_rules (
+	id SERIAL PRIMARY KEY,
+	account_id INTEGER NOT NULL REFERENCES gl_accounts(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	dimension_id INTEGER NOT NULL REFERENCES gl_dimensions(id) ON DELETE CASCADE,
+	is_required BOOLEAN NOT NULL DEFAULT FALSE,
+	parent_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS gl_account_dimension_rule_values (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL, 
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	rule_id INTEGER NOT NULL REFERENCES gl_account_dimension_rules(id) ON DELETE CASCADE,
+	value_id INTEGER NOT NULL REFERENCES gl_dimension_values(id) ON DELETE CASCADE
 );
