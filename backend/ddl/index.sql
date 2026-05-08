@@ -26,3 +26,17 @@ CREATE INDEX IF NOT EXISTS idx_tokens_expires_at ON tokens (expires_at);
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_tenant_company    ON gl_accounts (tenant_id, company_id);
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_account_type      ON gl_accounts (tenant_id, company_id, account_type);
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_is_active         ON gl_accounts (tenant_id, company_id, is_active);
+
+-- One top-level rule per account+dimension
+CREATE UNIQUE INDEX IF NOT EXISTS uq_acct_dim_rule_top
+	ON gl_account_dimension_rules (account_id, dimension_id)
+	WHERE parent_value_id IS NULL;
+
+-- One conditional rule per account+dimension+parent_value
+CREATE UNIQUE INDEX IF NOT EXISTS uq_acct_dim_rule_cond
+	ON gl_account_dimension_rules (account_id, dimension_id, parent_value_id)
+	WHERE parent_value_id IS NOT NULL;
+
+-- Fast lookup by account (used on every transaction line)
+CREATE INDEX IF NOT EXISTS idx_acct_dim_rules_account
+	ON gl_account_dimension_rules (account_id);
