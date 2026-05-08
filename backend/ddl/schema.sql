@@ -1,4 +1,5 @@
-DROP TABLE IF EXISTS gl_account_dimensions;
+DROP TABLE IF EXISTS gl_account_dimension_rule_values;
+DROP TABLE IF EXISTS gl_account_dimension_rules;
 DROP TABLE IF EXISTS gl_dimension_values;
 DROP TABLE IF EXISTS gl_dimensions;
 DROP TABLE IF EXISTS user_role_assignments;
@@ -131,11 +132,18 @@ CREATE TABLE IF NOT EXISTS gl_dimension_values (
 	UNIQUE (dimension_id, code)
 );
 
-CREATE TABLE IF NOT EXISTS gl_account_dimensions (
+CREATE TABLE IF NOT EXISTS gl_account_dimension_rules (
+	id SERIAL PRIMARY KEY,
 	account_id INTEGER NOT NULL REFERENCES gl_accounts(id) ON DELETE CASCADE,
-	dimension_id INTEGER NOT NULL REFERENCES gl_dimensions(id) ON DELETE CASCADE,
 	tenant_id INTEGER NOT NULL,
 	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	dimension_id INTEGER NOT NULL REFERENCES gl_dimensions(id) ON DELETE CASCADE,
 	is_required BOOLEAN NOT NULL DEFAULT FALSE,
-	PRIMARY KEY (account_id, dimension_id)
+	parent_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS gl_account_dimension_rule_values (
+	rule_id INTEGER NOT NULL REFERENCES gl_account_dimension_rules(id) ON DELETE CASCADE,
+	value_id INTEGER NOT NULL REFERENCES gl_dimension_values(id) ON DELETE CASCADE,
+	PRIMARY KEY (rule_id, value_id)
 );
