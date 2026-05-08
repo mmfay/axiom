@@ -55,7 +55,7 @@ async def get_role_permissions(role_id: int):
 		APIResponse.not_found("Role not found")
 
 	all_permissions = await Permissions.findAll()
-	assignments = await RolePermissions.findByRole(role_id, get_tenant())
+	assignments = await RolePermissions.findByRole(role_id)
 	assigned_ids = {a.permission_id for a in assignments}
 
 	assigned = [{"id": p.id, "name": p.name, "description": p.description} for p in all_permissions if p.id in assigned_ids]
@@ -72,7 +72,7 @@ async def add_role_permission(role_id: int, permission_id: int):
 	if not permission:
 		APIResponse.not_found("Permission not found")
 
-	existing = await RolePermissions.findByRole(role_id, get_tenant())
+	existing = await RolePermissions.findByRole(role_id)
 	if any(a.permission_id == permission_id for a in existing):
 		APIResponse.bad_request("Permission already assigned to role")
 
