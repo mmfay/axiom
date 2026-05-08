@@ -31,7 +31,7 @@ async def list_dimensions():
 
 async def create_dimension(data):
 
-	existing = await GLDimensions.findBySlot(get_company(), data.slot)
+	existing = await GLDimensions.findBySlot(data.slot)
 	if existing:
 		return APIResponse.bad_request("A dimension for that slot already exists")
 
