@@ -143,7 +143,9 @@ CREATE TABLE IF NOT EXISTS gl_account_dimension_rules (
 );
 
 CREATE TABLE IF NOT EXISTS gl_account_dimension_rule_values (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL, 
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
 	rule_id INTEGER NOT NULL REFERENCES gl_account_dimension_rules(id) ON DELETE CASCADE,
-	value_id INTEGER NOT NULL REFERENCES gl_dimension_values(id) ON DELETE CASCADE,
-	PRIMARY KEY (rule_id, value_id)
+	value_id INTEGER NOT NULL REFERENCES gl_dimension_values(id) ON DELETE CASCADE
 );

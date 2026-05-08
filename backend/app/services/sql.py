@@ -82,6 +82,12 @@ class SQL:
 		self._where.append(condition)
 		return self
 
+	def where_in(self, column: str, values: list):
+		# Add a WHERE col IN (1, 2, 3) condition — values must be integers
+		joined = ", ".join(str(int(v)) for v in values)
+		self._where.append(f"{column} IN ({joined})")
+		return self
+
 	def order_by(self, column: str):
 		self._order_by = column
 		return self
