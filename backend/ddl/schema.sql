@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS gl_transactions;
+DROP TABLE IF EXISTS sl_transactions;
 DROP TABLE IF EXISTS gl_account_dimension_rule_values;
 DROP TABLE IF EXISTS gl_account_dimension_rules;
 DROP TABLE IF EXISTS gl_dimension_values;
@@ -144,8 +146,45 @@ CREATE TABLE IF NOT EXISTS gl_account_dimension_rules (
 
 CREATE TABLE IF NOT EXISTS gl_account_dimension_rule_values (
 	id SERIAL PRIMARY KEY,
-	tenant_id INTEGER NOT NULL, 
+	tenant_id INTEGER NOT NULL,
 	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
 	rule_id INTEGER NOT NULL REFERENCES gl_account_dimension_rules(id) ON DELETE CASCADE,
 	value_id INTEGER NOT NULL REFERENCES gl_dimension_values(id) ON DELETE CASCADE
+);
+
+-- ── Subledger transactions ────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS sl_transactions (
+	id BIGSERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	type TEXT NOT NULL CHECK (type IN ('ap_invoice', 'ap_credit_memo', 'ap_payment', 'ar_invoice', 'ar_credit_memo', 'ar_payment')),
+	transaction_date DATE NOT NULL,
+	reference TEXT NOT NULL,
+	description TEXT,
+	counterparty_name TEXT NOT NULL,
+	amount NUMERIC(18, 2) NOT NULL,
+	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'voided')),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	posted_at TIMESTAMPTZ
+);
+
+-- ── General ledger transactions ───────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS gl_transactions (
+	id BIGSERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	transaction_date DATE NOT NULL,
+	account_id INTEGER NOT NULL REFERENCES gl_accounts(id) ON DELETE RESTRICT,
+	description TEXT,
+	debit NUMERIC(18, 2) NOT NULL DEFAULT 0 CHECK (debit >= 0),
+	credit NUMERIC(18, 2) NOT NULL DEFAULT 0 CHECK (credit >= 0),
+	dim1_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim2_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim3_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim4_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim5_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	source_id BIGINT NOT NULL REFERENCES sl_transactions(id) ON DELETE RESTRICT,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
