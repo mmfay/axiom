@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS vw_trial_balance;
 DROP TABLE IF EXISTS gl_transactions;
 DROP TABLE IF EXISTS sl_transactions;
 DROP TABLE IF EXISTS gl_account_dimension_rule_values;
@@ -188,3 +189,22 @@ CREATE TABLE IF NOT EXISTS gl_transactions (
 	source_id BIGINT NOT NULL REFERENCES sl_transactions(id) ON DELETE RESTRICT,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ── Views ─────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE VIEW vw_trial_balance AS
+SELECT
+    a.tenant_id,
+    a.company_id,
+    a.account_number,
+    a.name,
+    a.account_type,
+    a.is_active,
+    t.transaction_date,
+    t.debit,
+    t.credit
+FROM gl_accounts a
+LEFT JOIN gl_transactions t
+    ON  t.account_id  = a.id
+    AND t.tenant_id   = a.tenant_id
+    AND t.company_id  = a.company_id;

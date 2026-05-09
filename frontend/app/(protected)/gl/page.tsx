@@ -29,6 +29,12 @@ const JournalsIcon = (
 	</svg>
 );
 
+const TrialBalanceIcon = (
+	<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 6l9-3 9 3M3 6v12l9 3m-9-3l9 3m0 0l9-3m-9 3V9m9-3v12" />
+	</svg>
+);
+
 export default function GLPage() {
 
 	const { hasPermission, loading } = useAuth();
@@ -93,6 +99,21 @@ export default function GLPage() {
 						href="/gl/journals"
 						color="indigo"
 						icon={JournalsIcon}
+					/>
+				</div>
+			</section>
+
+			<section className="mb-6">
+				<h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Reporting</h2>
+				<div className="flex flex-wrap gap-3">
+					<ModuleButton
+						label="Trial Balance"
+						description="Net account balances as of a date"
+						permission="General_ledger.Read"
+						variant="page"
+						href="/gl/trial-balance"
+						color="emerald"
+						icon={TrialBalanceIcon}
 					/>
 				</div>
 			</section>
