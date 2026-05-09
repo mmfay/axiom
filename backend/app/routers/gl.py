@@ -1,11 +1,16 @@
+from datetime import date
 from fastapi import APIRouter, Depends
-from app.services import gl_accounts, gl_dimensions, gl_account_rules
+from app.services import gl_accounts, gl_dimensions, gl_account_rules, gl_reporting
 from app.services.session import require_permission
 from app.types.gl_accounts import CreateGLAccountRequest, UpdateGLAccountRequest, GLAccountFilters
 from app.types.gl_dimensions import CreateGLDimensionRequest, UpdateGLDimensionRequest, CreateGLDimensionValueRequest, UpdateGLDimensionValueRequest
 from app.types.gl_account_rules import CreateAccountRuleRequest, UpdateAccountRuleRequest, SetRuleValuesRequest
 
 router = APIRouter()
+
+@router.get("/trial-balance")
+async def trial_balance(as_of: date | None = None, _=Depends(require_permission("General_ledger.Read"))):
+	return await gl_reporting.get_trial_balance(as_of or date.today())
 
 @router.get("/accounts")
 async def list_accounts(
