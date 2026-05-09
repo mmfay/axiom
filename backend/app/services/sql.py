@@ -22,6 +22,15 @@ class SQL:
 		# List of WHERE conditions (combined with AND)
 		self._where = []
 
+		# List of JOIN clauses
+		self._joins = []
+
+		# GROUP BY clause
+		self._group_by = None
+
+		# List of HAVING conditions (combined with AND)
+		self._having = []
+
 		# RETURNING clause (Postgres-specific)
 		self._returning = None
 
@@ -88,6 +97,18 @@ class SQL:
 		self._where.append(f"{column} IN ({joined})")
 		return self
 
+	def left_join(self, table: str, condition: str):
+		self._joins.append(f"LEFT JOIN {table} ON {condition}")
+		return self
+
+	def group_by(self, clause: str):
+		self._group_by = clause
+		return self
+
+	def having(self, condition: str):
+		self._having.append(condition)
+		return self
+
 	def order_by(self, column: str):
 		self._order_by = column
 		return self
@@ -109,6 +130,8 @@ class SQL:
 		# Build base query depending on action type
 		if self._action == "SELECT":
 			query = f"SELECT {self._select_columns} FROM {self._table}"
+			if self._joins:
+				query += " " + " ".join(self._joins)
 
 		elif self._action == "INSERT":
 			# INSERT requires both fields and values
@@ -131,6 +154,14 @@ class SQL:
 		# Append WHERE conditions if present
 		if self._where:
 			query += " WHERE " + " AND ".join(self._where)
+
+		# Append GROUP BY clause if specified
+		if self._group_by:
+			query += f" GROUP BY {self._group_by}"
+
+		# Append HAVING conditions if present
+		if self._having:
+			query += " HAVING " + " AND ".join(self._having)
 
 		# Append ORDER BY clause if specified
 		if self._order_by:
