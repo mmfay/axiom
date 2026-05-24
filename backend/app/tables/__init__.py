@@ -12,6 +12,9 @@ from .GLDimensions import GLDimensions
 from .GLDimensionValues import GLDimensionValues
 from .GLAccountDimensionRules import GLAccountDimensionRules
 from .GLAccountDimensionRuleValues import GLAccountDimensionRuleValues
+from .GLJournals import GLJournals
+from .GLJournalLines import GLJournalLines
+from .NumberingSchemes import NumberingSchemes
 
 __all__ = [
 	"Users",
@@ -28,4 +31,7 @@ __all__ = [
 	"GLDimensionValues",
 	"GLAccountDimensionRules",
 	"GLAccountDimensionRuleValues",
+	"GLJournals",
+	"GLJournalLines",
+	"NumberingSchemes",
 ]
