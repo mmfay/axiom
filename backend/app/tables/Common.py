@@ -98,6 +98,17 @@ class Common:
 		finally:
 			await db.release(conn)
 			
+	def to_dict(self) -> dict:
+		result = {}
+		for key, value in self.__dict__.items():
+			if key.startswith("_"):
+				continue
+			if hasattr(value, "isoformat"):
+				result[key] = value.isoformat()
+			else:
+				result[key] = value
+		return result
+
 	@classmethod
 	def from_row(cls, row: dict, connection=None):
 		"""
