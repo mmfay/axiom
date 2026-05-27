@@ -1,4 +1,7 @@
 DROP VIEW IF EXISTS vw_trial_balance;
+DROP TABLE IF EXISTS numbering_schemes;
+DROP TABLE IF EXISTS gl_journal_lines;
+DROP TABLE IF EXISTS gl_journals;
 DROP TABLE IF EXISTS gl_transactions;
 DROP TABLE IF EXISTS sl_transactions;
 DROP TABLE IF EXISTS gl_account_dimension_rule_values;
@@ -159,11 +162,11 @@ CREATE TABLE IF NOT EXISTS sl_transactions (
 	id BIGSERIAL PRIMARY KEY,
 	tenant_id INTEGER NOT NULL,
 	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
-	type TEXT NOT NULL CHECK (type IN ('ap_invoice', 'ap_credit_memo', 'ap_payment', 'ar_invoice', 'ar_credit_memo', 'ar_payment')),
+	type TEXT NOT NULL CHECK (type IN ('ap_invoice', 'ap_credit_memo', 'ap_payment', 'ar_invoice', 'ar_credit_memo', 'ar_payment', 'gl_journal')),
 	transaction_date DATE NOT NULL,
 	reference TEXT NOT NULL,
 	description TEXT,
-	counterparty_name TEXT NOT NULL,
+	counterparty_name TEXT,
 	amount NUMERIC(18, 2) NOT NULL,
 	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'voided')),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -188,6 +191,54 @@ CREATE TABLE IF NOT EXISTS gl_transactions (
 	dim5_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
 	source_id BIGINT NOT NULL REFERENCES sl_transactions(id) ON DELETE RESTRICT,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ── Numbering schemes ────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS numbering_schemes (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	document_type TEXT NOT NULL,
+	prefix TEXT NOT NULL DEFAULT '',
+	separator TEXT NOT NULL DEFAULT '-',
+	padding INTEGER NOT NULL DEFAULT 4 CHECK (padding BETWEEN 1 AND 10),
+	include_year BOOLEAN NOT NULL DEFAULT FALSE,
+	include_month BOOLEAN NOT NULL DEFAULT FALSE,
+	next_value INTEGER NOT NULL DEFAULT 1,
+	is_active BOOLEAN NOT NULL DEFAULT TRUE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (tenant_id, company_id, document_type)
+);
+
+-- ── General journals ─────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS gl_journals (
+	id BIGSERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	journal_date DATE NOT NULL,
+	reference TEXT NOT NULL,
+	memo TEXT,
+	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'voided')),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	posted_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS gl_journal_lines (
+	id BIGSERIAL PRIMARY KEY,
+	journal_id BIGINT NOT NULL REFERENCES gl_journals(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	company_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE RESTRICT,
+	account_id INTEGER NOT NULL REFERENCES gl_accounts(id) ON DELETE RESTRICT,
+	description TEXT,
+	debit NUMERIC(18,2) NOT NULL DEFAULT 0 CHECK (debit >= 0),
+	credit NUMERIC(18,2) NOT NULL DEFAULT 0 CHECK (credit >= 0),
+	dim1_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim2_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim3_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim4_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
+	dim5_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT
 );
 
 -- ── Views ─────────────────────────────────────────────────────────────────────
