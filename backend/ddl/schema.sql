@@ -166,11 +166,8 @@ CREATE TABLE IF NOT EXISTS sl_transactions (
 	transaction_date DATE NOT NULL,
 	reference TEXT NOT NULL,
 	description TEXT,
-	counterparty_name TEXT,
 	amount NUMERIC(18, 2) NOT NULL,
-	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'voided')),
-	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	posted_at TIMESTAMPTZ
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ── General ledger transactions ───────────────────────────────────────────────

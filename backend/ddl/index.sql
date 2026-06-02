@@ -41,12 +41,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_acct_dim_rule_cond
 CREATE INDEX IF NOT EXISTS idx_acct_dim_rules_account
 	ON gl_account_dimension_rules (account_id);
 
--- sl_transactions: primary listing query is by company + date; type+status for module views
+-- sl_transactions: primary listing query is by company + date;
 CREATE INDEX IF NOT EXISTS idx_sl_transactions_company_date
 	ON sl_transactions (tenant_id, company_id, transaction_date DESC);
 
 CREATE INDEX IF NOT EXISTS idx_sl_transactions_type_status
-	ON sl_transactions (tenant_id, company_id, type, status);
+	ON sl_transactions (tenant_id, company_id, type);
 
 -- gl_transactions: account balance by date; entry grouping; subledger reverse-lookup
 CREATE INDEX IF NOT EXISTS idx_gl_transactions_account_date

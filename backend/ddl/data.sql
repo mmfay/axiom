@@ -109,15 +109,15 @@ ON CONFLICT DO NOTHING;
 
 -- ── Subledger transactions ────────────────────────────────────────────────────
 
-INSERT INTO sl_transactions (tenant_id, company_id, type, transaction_date, reference, description, counterparty_name, amount, status, posted_at)
+INSERT INTO sl_transactions (tenant_id, company_id, type, transaction_date, reference, description, amount)
 VALUES
-    (1, 1, 'ap_invoice',  '2026-04-01', 'INV-2001', 'April office rent',        'WeWork',       3500.00, 'posted', '2026-04-01 08:00:00+00'),
-    (1, 1, 'ap_invoice',  '2026-04-05', 'INV-2002', 'Office supplies',          'Acme Corp',    2400.00, 'posted', '2026-04-05 09:00:00+00'),
-    (1, 1, 'ar_invoice',  '2026-04-10', 'INV-1001', 'Consulting services Q1',   'TechCorp Inc', 5000.00, 'posted', '2026-04-10 10:00:00+00'),
-    (1, 1, 'ap_payment',  '2026-04-15', 'PAY-2001', 'Payment for INV-2001',     'WeWork',       3500.00, 'posted', '2026-04-15 11:00:00+00'),
-    (1, 1, 'ap_payment',  '2026-04-18', 'PAY-2002', 'Payment for INV-2002',     'Acme Corp',    2400.00, 'posted', '2026-04-18 09:30:00+00'),
-    (1, 1, 'ar_payment',  '2026-04-22', 'PAY-1001', 'Payment for INV-1001',     'TechCorp Inc', 5000.00, 'posted', '2026-04-22 14:00:00+00'),
-    (1, 1, 'ap_invoice',  '2026-04-28', 'INV-2003', 'Legal retainer April',     'Lawson & Co',  1500.00, 'draft',  NULL)
+    (1, 1, 'ap_invoice',  '2026-04-01', 'INV-2001', 'April office rent',       3500.00 ),
+    (1, 1, 'ap_invoice',  '2026-04-05', 'INV-2002', 'Office supplies',         2400.00 ),
+    (1, 1, 'ar_invoice',  '2026-04-10', 'INV-1001', 'Consulting services Q1',  5000.00 ),
+    (1, 1, 'ap_payment',  '2026-04-15', 'PAY-2001', 'Payment for INV-2001',    3500.00 ),
+    (1, 1, 'ap_payment',  '2026-04-18', 'PAY-2002', 'Payment for INV-2002',    2400.00 ),
+    (1, 1, 'ar_payment',  '2026-04-22', 'PAY-1001', 'Payment for INV-1001',    5000.00 ),
+    (1, 1, 'ap_invoice',  '2026-04-28', 'INV-2003', 'Legal retainer April',    1500.00 )
 ON CONFLICT DO NOTHING;
 
 -- ── GL transactions ───────────────────────────────────────────────────────────
