@@ -15,6 +15,8 @@ from .GLAccountDimensionRuleValues import GLAccountDimensionRuleValues
 from .GLJournals import GLJournals
 from .GLJournalLines import GLJournalLines
 from .NumberingSchemes import NumberingSchemes
+from .SLTrans import SLTrans
+from .GLTrans import GLTrans
 
 __all__ = [
 	"Users",
@@ -34,4 +36,6 @@ __all__ = [
 	"GLJournals",
 	"GLJournalLines",
 	"NumberingSchemes",
+	"SLTrans",
+	"GLTrans"
 ]

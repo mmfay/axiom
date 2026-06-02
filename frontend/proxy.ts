@@ -11,7 +11,7 @@ async function fetchSession(sid: string) {
 	return { ok: res.ok, data: body?.data };
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 
 	const sid = request.cookies.get("sid");
 

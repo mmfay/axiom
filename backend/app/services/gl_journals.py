@@ -204,3 +204,18 @@ async def post_journal(journal_id: int):
         await journal.set_posted(conn)
 
     return APIResponse.ok("Journal posted", _fmt(journal, lines))
+
+async def get_journals_list_page(
+        cursor: str,
+        journal_date: str | None = None, 
+		reference: str | None = None, 
+		memo: str | None = None,
+        status: str | None = None):
+
+	page = await GLJournals.getPagination(cursor, journal_date, reference, memo, status)
+	
+	return APIResponse.ok("Journals fetched", {
+		"items": [item.to_dict() for item in page.items],
+		"next_cursor": page.next_cursor,
+		"has_more": page.has_more,
+	})

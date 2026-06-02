@@ -17,6 +17,16 @@ async def trial_balance(as_of: date | None = None, _=Depends(require_permission(
 async def list_journals(_=Depends(require_permission("General_ledger.Read"))):
 	return await gl_journals.list_journals()
 
+@router.get("/journals/listPage")
+async def list_journals(
+	cursor: str | None = None, 
+	journal_date: str | None = None,
+	reference: str | None = None,
+	memo: str | None = None,
+	status: str | None = None,
+	_=Depends(require_permission("General_ledger.Read"))):
+	return await gl_journals.get_journals_list_page(cursor, reference=reference, journal_date=journal_date, memo=memo, status=status)
+
 @router.post("/journals")
 async def create_journal(data: CreateGLJournalRequest, _=Depends(require_permission("General_ledger.Write"))):
 	return await gl_journals.create_journal(data)
