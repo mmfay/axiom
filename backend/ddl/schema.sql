@@ -165,6 +165,7 @@ CREATE TABLE IF NOT EXISTS sl_transactions (
 	type TEXT NOT NULL CHECK (type IN ('ap_invoice', 'ap_credit_memo', 'ap_payment', 'ar_invoice', 'ar_credit_memo', 'ar_payment', 'gl_journal')),
 	transaction_date DATE NOT NULL,
 	reference TEXT NOT NULL,
+	voucher TEXT NOT NULL,
 	description TEXT,
 	amount NUMERIC(18, 2) NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -186,7 +187,7 @@ CREATE TABLE IF NOT EXISTS gl_transactions (
 	dim3_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
 	dim4_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
 	dim5_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
-	source_id BIGINT NOT NULL REFERENCES sl_transactions(id) ON DELETE RESTRICT,
+	voucher TEXT NOT NULL,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

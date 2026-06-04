@@ -52,6 +52,5 @@ CREATE INDEX IF NOT EXISTS idx_sl_transactions_type_status
 CREATE INDEX IF NOT EXISTS idx_gl_transactions_account_date
 	ON gl_transactions (tenant_id, company_id, account_id, transaction_date);
 
-
-CREATE INDEX IF NOT EXISTS idx_gl_transactions_source
-	ON gl_transactions (source_id);
+CREATE INDEX IF NOT EXISTS idx_gl_transactions_voucher
+	ON gl_transactions (voucher);

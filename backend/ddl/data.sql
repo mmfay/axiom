@@ -107,104 +107,112 @@ VALUES
     ((SELECT id FROM gl_dimensions WHERE tenant_id = 1 AND company_id = 1 AND slot = 2), 1, 1, 'RMT', 'Remote')
 ON CONFLICT DO NOTHING;
 
+-- ── Numbering schemes ─────────────────────────────────────────────────────────
+
+INSERT INTO numbering_schemes (tenant_id, company_id, document_type, prefix, separator, padding, include_year, include_month, next_value, is_active)
+VALUES
+    (1, 1, 'gl_journal', 'JE', '-', 4, TRUE,  FALSE, 11, TRUE),
+    (1, 1, 'voucher',    'V',  '',  4, FALSE, FALSE,  8, TRUE)
+ON CONFLICT DO NOTHING;
+
 -- ── Subledger transactions ────────────────────────────────────────────────────
 
-INSERT INTO sl_transactions (tenant_id, company_id, type, transaction_date, reference, description, amount)
+INSERT INTO sl_transactions (tenant_id, company_id, type, transaction_date, reference, voucher, description, amount)
 VALUES
-    (1, 1, 'ap_invoice',  '2026-04-01', 'INV-2001', 'April office rent',       3500.00 ),
-    (1, 1, 'ap_invoice',  '2026-04-05', 'INV-2002', 'Office supplies',         2400.00 ),
-    (1, 1, 'ar_invoice',  '2026-04-10', 'INV-1001', 'Consulting services Q1',  5000.00 ),
-    (1, 1, 'ap_payment',  '2026-04-15', 'PAY-2001', 'Payment for INV-2001',    3500.00 ),
-    (1, 1, 'ap_payment',  '2026-04-18', 'PAY-2002', 'Payment for INV-2002',    2400.00 ),
-    (1, 1, 'ar_payment',  '2026-04-22', 'PAY-1001', 'Payment for INV-1001',    5000.00 ),
-    (1, 1, 'ap_invoice',  '2026-04-28', 'INV-2003', 'Legal retainer April',    1500.00 )
+    (1, 1, 'ap_invoice',  '2026-04-01', 'INV-2001', 'V0001', 'April office rent',       3500.00 ),
+    (1, 1, 'ap_invoice',  '2026-04-05', 'INV-2002', 'V0002', 'Office supplies',         2400.00 ),
+    (1, 1, 'ar_invoice',  '2026-04-10', 'INV-1001', 'V0003', 'Consulting services Q1',  5000.00 ),
+    (1, 1, 'ap_payment',  '2026-04-15', 'PAY-2001', 'V0004', 'Payment for INV-2001',    3500.00 ),
+    (1, 1, 'ap_payment',  '2026-04-18', 'PAY-2002', 'V0005', 'Payment for INV-2002',    2400.00 ),
+    (1, 1, 'ar_payment',  '2026-04-22', 'PAY-1001', 'V0006', 'Payment for INV-1001',    5000.00 ),
+    (1, 1, 'ap_invoice',  '2026-04-28', 'INV-2003', 'V0007', 'Legal retainer April',    1500.00 )
 ON CONFLICT DO NOTHING;
 
 -- ── GL transactions ───────────────────────────────────────────────────────────
 
 -- INV-2001 · WeWork rent — DR Rent Expense / CR AP
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-01',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='6100'),
     'INV-2001 WeWork', 3500.00, 0.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-2001'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0001');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-01',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='2000'),
     'INV-2001 WeWork', 0.00, 3500.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-2001'));
+    'V0001');
 
 -- INV-2002 · Acme Corp supplies — DR Misc Expense / CR AP
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-05',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='6900'),
     'INV-2002 Acme Corp', 2400.00, 0.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-2002'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0002');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-05',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='2000'),
     'INV-2002 Acme Corp', 0.00, 2400.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-2002'));
+    'V0002');
 
 -- INV-1001 · TechCorp consulting — DR AR / CR Service Revenue
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-10',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='1200'),
     'INV-1001 TechCorp Inc', 5000.00, 0.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='SLS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='RMT'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-1001'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0003');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-10',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='4100'),
     'INV-1001 TechCorp Inc', 0.00, 5000.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='SLS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='RMT'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='INV-1001'));
+    'V0003');
 
 -- PAY-2001 · WeWork payment — DR AP / CR Cash
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-15',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='2000'),
     'PAY-2001 WeWork', 3500.00, 0.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-2001'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0004');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-15',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='1000'),
     'PAY-2001 WeWork', 0.00, 3500.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-2001'));
+    'V0004');
 
 -- PAY-2002 · Acme Corp payment — DR AP / CR Cash
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-18',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='2000'),
     'PAY-2002 Acme Corp', 2400.00, 0.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-2002'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0005');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-18',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='1000'),
     'PAY-2002 Acme Corp', 0.00, 2400.00, NULL, NULL,
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-2002'));
+    'V0005');
 
 -- PAY-1001 · TechCorp payment — DR Cash / CR AR
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-22',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='1000'),
     'PAY-1001 TechCorp Inc', 5000.00, 0.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='SLS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='RMT'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-1001'));
-INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, source_id)
+    'V0006');
+INSERT INTO gl_transactions (tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, voucher)
 VALUES (1, 1, '2026-04-22',
     (SELECT id FROM gl_accounts        WHERE tenant_id=1 AND company_id=1 AND account_number='1200'),
     'PAY-1001 TechCorp Inc', 0.00, 5000.00,
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='SLS'),
     (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='RMT'),
-    (SELECT id FROM sl_transactions     WHERE tenant_id=1 AND company_id=1 AND reference='PAY-1001'));
+    'V0006');
 
 -- ── GL Journals ───────────────────────────────────────────────────────────────
 
