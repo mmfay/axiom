@@ -2,7 +2,6 @@ from decimal import Decimal
 from app.tables import GLJournals, GLJournalLines
 from app.classes.apiresponse import APIResponse
 from app.classes.appexception import AppException
-from app.services.ctx import get_tenant, get_company
 from app.services.db import db
 from app.services.numbering import get_next_number
 
@@ -37,7 +36,7 @@ def _fmt(j: GLJournals, lines: list[GLJournalLines] | None = None) -> dict:
     return data
 
 
-def _validate(lines) -> tuple[Decimal, Decimal]:
+def _basic_validation(lines) -> tuple[Decimal, Decimal]:
     if len(lines) < 2:
         raise AppException(400, "A journal must have at least two lines")
 
@@ -68,10 +67,13 @@ async def list_journals():
 
 
 async def create_journal(data):
-    _validate(data.lines)
+    
+    _basic_validation(data.lines)
 
     async with db.transaction() as conn:
+        
         reference = await get_next_number("gl_journal", conn)
+        
         if not reference:
             raise AppException(400, "No numbering scheme configured for gl_journal")
 
@@ -81,9 +83,11 @@ async def create_journal(data):
             memo=data.memo,
             connection=conn,
         )
+        
         journal = await journal.insert()
 
         lines = []
+        
         for l in data.lines:
             line = GLJournalLines(
                 journal_id=journal.id,
@@ -113,21 +117,24 @@ async def get_journal(journal_id: int):
 
 
 async def update_journal(journal_id: int, data):
+    
     journal = await GLJournals.find(journal_id)
+    
     if not journal:
         return APIResponse.not_found("Journal not found")
+    
     if journal.status != "draft":
         return APIResponse.bad_request("Only draft journals can be edited")
 
     if data.journal_date is not None:
         journal.journal_date = data.journal_date
-    if data.reference is not None:
-        journal.reference = data.reference
     if data.memo is not None:
         journal.memo = data.memo
 
     if data.lines is not None:
-        _validate(data.lines)
+        
+        _basic_validation(data.lines)
+        
         async with db.transaction() as conn:
             journal.connection = conn
             await journal.update()
@@ -156,54 +163,17 @@ async def update_journal(journal_id: int, data):
 
 
 async def post_journal(journal_id: int):
-    journal = await GLJournals.find(journal_id)
-    if not journal:
-        return APIResponse.not_found("Journal not found")
-    if journal.status != "draft":
-        return APIResponse.bad_request("Only draft journals can be posted")
+    
+	journal = await GLJournals.find(journal_id)
+    
+	if not journal:
+		return APIResponse.not_found("Journal not found")
+	if journal.status != "draft":
+		return APIResponse.bad_request("Only draft journals can be posted")
 
-    lines = await GLJournalLines.findByJournal(journal_id)
-    total_debit, _ = _validate(lines)
+	await journal.post()
 
-    async with db.transaction() as conn:
-        sl_sql = """
-            INSERT INTO sl_transactions
-                (tenant_id, company_id, type, transaction_date, reference, description, amount, status, posted_at)
-            VALUES ($1, $2, 'gl_journal', $3, $4, $5, $6, 'posted', NOW())
-            RETURNING id
-        """
-        sl_id = await conn.fetchval(
-            sl_sql,
-            get_tenant(),
-            get_company(),
-            journal.journal_date,
-            journal.reference,
-            journal.memo,
-            float(total_debit),
-        )
-
-        gl_sql = """
-            INSERT INTO gl_transactions
-                (tenant_id, company_id, transaction_date, account_id, description,
-                 debit, credit, dim1_value_id, dim2_value_id, dim3_value_id,
-                 dim4_value_id, dim5_value_id, source_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        """
-        for l in lines:
-            await conn.execute(
-                gl_sql,
-                get_tenant(), get_company(),
-                journal.journal_date,
-                l.account_id, l.description,
-                float(l.debit or 0), float(l.credit or 0),
-                l.dim1_value_id, l.dim2_value_id, l.dim3_value_id,
-                l.dim4_value_id, l.dim5_value_id,
-                sl_id,
-            )
-
-        await journal.set_posted(conn)
-
-    return APIResponse.ok("Journal posted", _fmt(journal, lines))
+	return APIResponse.ok("Journal posted")
 
 async def get_journals_list_page(
         cursor: str,
