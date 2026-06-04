@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
 from app.services.ctx import get_tenant, get_company
+from app.classes.apiresponse import APIResponse
 
 
 @dataclass
@@ -84,7 +85,7 @@ class GLJournalLines(Common):
 		)
 
 		if row is None:
-			raise ValueError("Insert Failed: No row returned")
+			APIResponse.bad_request("Insert Failed: No Valid Data")
 
 		self.id = row["id"]
 		self.tenant_id = row["tenant_id"]
@@ -94,6 +95,7 @@ class GLJournalLines(Common):
 
 	@classmethod
 	async def findByJournal(cls, journal_id: int, connection=None) -> list["GLJournalLines"]:
+		
 		temp = cls(connection=connection)
 
 		sql = (
@@ -111,6 +113,7 @@ class GLJournalLines(Common):
 
 	@classmethod
 	async def deleteByJournal(cls, journal_id: int, connection=None) -> None:
+
 		temp = cls(connection=connection)
 
 		sql = (
