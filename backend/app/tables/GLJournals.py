@@ -11,7 +11,7 @@ from app.tables.SLTrans import SLTrans
 from app.tables.GLTrans import GLTrans
 from app.services.numbering import get_next_number
 from app.classes.glvalidation import GLValidation
-from datetime import date, datetime, timezone
+from datetime import date
 from app.services.db import db
 from decimal import Decimal
 
@@ -94,7 +94,7 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("journal_date = $4, reference = $5, memo = $6, status = $7, posted_at = $8")
+					.set("journal_date = $4, reference = $5, memo = $6, status = $7")
 					.where("tenant_id = $1")
 					.where("company_id = $2")
 					.where("id = $3")
@@ -111,7 +111,6 @@ class GLJournals(Common):
 			self.reference,
 			self.memo,
 			self.status,
-			self.posted_at,
 		)
 
 		if row is None:
@@ -193,7 +192,7 @@ class GLJournals(Common):
 				payload = decode_cursor(cursor)
 				last_id = int(payload.get("id", 0))
 			except Exception:
-				raise AppException(400, "Invalid cursor")
+				APIResponse.bad_request("Invalid Cursor")
 
 		params: list = [get_tenant(), get_company(), last_id]
 
@@ -295,24 +294,18 @@ class GLJournals(Common):
 
 				await sl_transaction.insert()	
 
-			for l in lines:
-				gl_trans = GLTrans(
-					connection=conn,
-					transaction_date=self.journal_date,
-					account_id=l.account_id,
-					description=l.description,
-					debit=l.debit,
-					credit=l.credit,
-					dim1_value_id=l.dim1_value_id,
-					dim2_value_id=l.dim2_value_id,
-					dim3_value_id=l.dim3_value_id,
-					dim4_value_id=l.dim4_value_id,
-					dim5_value_id=l.dim5_value_id,
-					voucher=next_voucher,
-				)
-				await gl_trans.insert()
+			gl_trans = GLTrans(
+				connection=conn,
+				transaction_date=self.journal_date,
+				account_id=10,
+				description='GL Example',
+				debit=20,
+				credit=20,
+				voucher=next_voucher,
+			)
+
+			await gl_trans.insert()
 
 			self.status = 'posted'
-			self.posted_at = datetime.now(timezone.utc)
 
 			await self.update()
