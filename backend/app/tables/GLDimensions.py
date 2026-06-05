@@ -49,7 +49,7 @@ class GLDimensions(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
 			get_tenant(),
 			get_company(),
@@ -85,7 +85,7 @@ class GLDimensions(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
 			get_tenant(),
 			get_company(),

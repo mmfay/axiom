@@ -43,7 +43,7 @@ class Permissions(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.name, self.description)
+		row = await self.fetch_returning(sql, self.name, self.description)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -69,7 +69,7 @@ class Permissions(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.name, self.description, self.id)
+		row = await self.fetch_returning(sql, self.name, self.description, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

@@ -45,11 +45,11 @@ class Tenants(Common):
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.name, self.email)
+		row = await self.fetch_returning(sql, self.name, self.email)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
-		
+
 		self.id = row["id"]
 		self.created_at = row["created_at"]
 		self.is_active = row["is_active"]
@@ -73,7 +73,7 @@ class Tenants(Common):
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.name, self.email, self.is_active, self.id)
+		row = await self.fetch_returning(sql, self.name, self.email, self.is_active, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

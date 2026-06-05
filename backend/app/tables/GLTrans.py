@@ -71,15 +71,14 @@ class GLTrans(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, dim3_value_id, dim4_value_id, dim5_value_id, voucher")
-					.values("$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13")
+					.fields("transaction_date, account_id, description, debit, credit, dim1_value_id, dim2_value_id, dim3_value_id, dim4_value_id, dim5_value_id, voucher")
+					.values("$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_one(sql, 
-							get_tenant(), 
-							get_company(),
 							self.transaction_date,
 							self.account_id,
 							self.description,
@@ -93,7 +92,7 @@ class GLTrans(Common):
 							self.voucher)
 
 		if row is None:
-			raise ValueError("Insert Failed: No row returned")
+			APIResponse.bad_request("Insert Failed: Row not returned")
 
 		self.id = row["id"]
 
@@ -107,89 +106,13 @@ class GLTrans(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("id = $3")
-			.getQuery()
+					.where("id = $1")
+					.scoped()
+				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
-
+		row = await temp.fetch_one(sql, id)
 		if row is None:
 			return None
 
 		return cls.from_row(row, connection)
-
-	@classmethod
-	async def findByTenant(cls, connection=None) -> list["GLTrans"]:
-
-		temp = cls(connection=connection)
-
-		sql = (
-			SQL()
-				.select(cls.table_name)
-				.where("tenant_id = $1")
-			.getQuery()
-		)
-
-		rows = await temp.fetch_all(sql, get_tenant())
-
-		return [cls.from_row(row, connection) for row in rows]
-
-	@classmethod
-	async def findByCompany(cls, connection=None) -> list["GLTrans"]:
-
-		temp = cls(connection=connection)
-
-		sql = (
-			SQL()
-				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-			.getQuery()
-		)
-
-		rows = await temp.fetch_all(sql, get_tenant(), get_company())
-
-		return [cls.from_row(row, connection) for row in rows]
-
-	@classmethod
-	async def getPagination(cls, cursor: str | None = None, email: str | None = None, user_id: str | None = None, is_enabled: bool | None = None, connection=None) -> CursorPage:
-
-		temp = cls(connection=connection)
-
-		page_lines = 2
-
-		last_id = 0
-		
-		if cursor:
-			try:
-				payload = decode_cursor(cursor)
-				last_id = int(payload.get("id", 0))
-			except Exception:
-				APIResponse.bad_request("Invalid Cursor")
-
-		params: list = [get_tenant(), last_id]
-
-		builder = (
-			SQL()
-				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("id > $2")
-		)
-
-		params.append(page_lines + 1)
-		sql = builder.order_by("id").limit(f"${len(params)}").getQuery()
-
-		rows = await temp.fetch_all(sql, *params)
-
-		has_more = len(rows) > page_lines
-		rows = rows[:page_lines]
-
-		items = [cls.from_row(r, connection) for r in rows]
-
-		next_cursor = None
-		if has_more:
-			next_cursor = encode_cursor({"id": dict(rows[-1])["id"]})
-
-		return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
