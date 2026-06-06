@@ -1,7 +1,6 @@
 import { getJSON, postJSON, patchJSON } from "./submissions";
 import { FilterSet, CursorPage, APIResult } from "../types/data";
 import { GLJournal, CreateGLJournalRequest, UpdateGLJournalRequest } from "../types/gl_journals";
-import { GLAccount } from "../types/gl_accounts";
 
 export async function getJournals(): Promise<APIResult<GLJournal[]>> {
 	return getJSON("/gl/journals");
@@ -36,6 +35,3 @@ export async function voidJournal(id: number): Promise<APIResult<GLJournal>> {
 	return postJSON(`/gl/journals/${id}/void`);
 }
 
-export async function getAllAccounts(): Promise<APIResult<GLAccount[]>> {
-	return getJSON("/gl/accounts/all");
-}
