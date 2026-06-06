@@ -173,7 +173,8 @@ async def post_journal(journal_id: int):
 
 	await journal.post()
 
-	return APIResponse.ok("Journal posted")
+	lines = await GLJournalLines.findByJournal(journal_id)
+	return APIResponse.ok("Journal posted", _fmt(journal, lines))
 
 async def get_journals_list_page(
         cursor: str,

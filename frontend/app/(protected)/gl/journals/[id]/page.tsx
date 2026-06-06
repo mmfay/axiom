@@ -16,13 +16,13 @@ export default function JournalDetailPage({ params }: { params: Promise<{ id: st
 		fetchJournal(Number(id)).then(setJournal);
 	}, [id, fetchJournal]);
 
-	if (loading) 
-		return <div className="p-8 text-sm text-gray-400 dark:text-slate-500">Loading…</div>;
-	if (error) 
+	if (loading)
+		return <div className="p-8 text-sm text-gray-400 dark:text-slate-500">Loading&hellip;</div>;
+	if (error)
 		return <div className="p-8 text-sm text-red-500 dark:text-red-400">{error}</div>;
-	if (!journal) 
+	if (!journal)
 		return null;
 
-	return <JournalForm initial={journal} />;
-	
+	return <JournalForm initial={journal} onMutate={setJournal} />;
+
 }
