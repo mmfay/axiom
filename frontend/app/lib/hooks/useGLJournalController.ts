@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CachedPage, FilterSet } from "../types/data";
 import { ApiResponse } from "../api/response";
-import { getGLJournalsListPage } from "../api/gl_journals";
+import { getGLJournalsListPage, getJournal } from "../api/gl_journals";
 import { GLJournal } from "../types/gl_journals";
 
 export type GLJournalController = {
@@ -19,6 +19,8 @@ export type GLJournalController = {
 	showPrev: boolean;
 	showNext: boolean;
 	pageNumber: number;
+
+	fetchJournal: (id: number) => Promise<GLJournal | null>;
 
 	// filters
 	itemFilters: FilterSet;
@@ -176,6 +178,29 @@ export function useGLJournalController(): GLJournalController {
 		,[reload]
 	);
 
+	const fetchJournal = useCallback(async (id: number): Promise<GLJournal | null> => {
+
+		setLoading(true);
+		setError(null);
+
+		try {
+
+			const res = ApiResponse.handle(await getJournal(id));
+			if (!res.ok || !res.data) {
+				setError(res.message ?? "Journal not found");
+				return null;
+			}
+			return res.data;
+
+		} catch (e: any) {
+			setError(e?.message ?? "Failed to load journal");
+			return null;
+		} finally {
+			setLoading(false);
+		}
+		
+	}, []);
+
 	// make accessible outside of controller
 	return {
 		pages,
@@ -189,6 +214,7 @@ export function useGLJournalController(): GLJournalController {
 		showPrev,
 		showNext,
 		pageNumber,
+		fetchJournal,
 		itemFilters,
 		setItemFiltersState,
 		clearFilters
