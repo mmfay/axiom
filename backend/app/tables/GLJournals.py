@@ -60,16 +60,15 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, journal_date, reference, memo")
-					.values("$1, $2, $3, $4, $5")
+					.fields("journal_date, reference, memo")
+					.values("$1, $2, $3")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.journal_date,
 			self.reference,
 			self.memo,
@@ -94,18 +93,15 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("journal_date = $4, reference = $5, memo = $6, status = $7")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("journal_date = $2, reference = $3, memo = $4, status = $5")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.id,
 			self.journal_date,
 			self.reference,
@@ -123,15 +119,14 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("status = $4, posted_at = NOW()")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("status = $2, posted_at = NOW()")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
-		row = await conn.fetchrow(sql, get_tenant(), get_company(), self.id, 'posted')
+		row = await conn.fetchrow(sql, self.id, 'posted')
 
 		if row is None:
 			raise ValueError("Post Failed: No row returned")
@@ -148,35 +143,17 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.where("id = $1")
+					.scoped()
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
 
 		return cls.from_row(row, connection)
-
-	@classmethod
-	async def findByCompany(cls, connection=None) -> list["GLJournals"]:
-		temp = cls(connection=connection)
-
-		sql = (
-			SQL()
-				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.order_by("journal_date DESC, id DESC")
-				.getQuery()
-		)
-
-		rows = await temp.fetch_all(sql, get_tenant(), get_company())
-
-		return [cls.from_row(row, connection) for row in rows]
 	
 	@classmethod
 	async def getPagination(cls, cursor: str | None = None, journal_date: str | None = None, reference: str | None = None, memo: str | None = None, status: str | None = None, connection=None) -> CursorPage:
@@ -194,35 +171,34 @@ class GLJournals(Common):
 			except Exception:
 				APIResponse.bad_request("Invalid Cursor")
 
-		params: list = [get_tenant(), get_company(), last_id]
+		params: list = [last_id]
 
-		builder = (
+		sql = (
 			SQL()
 				.select(cls.table_name)
-				.columns("id", "journal_date", "reference", "memo", "status", "company_id", "tenant_id")
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("id > $3")
+					.columns("id", "journal_date", "reference", "memo", "status", "company_id", "tenant_id")
+					.where("id > $1")
+					.scoped()
 		)
 
 		if journal_date:
 			params.append(date.fromisoformat(journal_date))
-			builder.where(f"journal_date = ${len(params)}")
+			sql.where(f"journal_date = ${len(params)}")
 
 		if reference:
 			params.append(f"%{reference}%")
-			builder.where(f"reference ILIKE ${len(params)}")
+			sql.where(f"reference ILIKE ${len(params)}")
 
 		if memo:
 			params.append(f"%{memo}%")
-			builder.where(f"memo ILIKE ${len(params)}")
+			sql.where(f"memo ILIKE ${len(params)}")
 
 		if status:
 			params.append(status)
-			builder.where(f"status = ${len(params)}")
+			sql.where(f"status = ${len(params)}")
 
 		params.append(page_lines + 1)
-		sql = builder.order_by("id").limit(f"${len(params)}").getQuery()
+		sql = sql.order_by("id").limit(f"${len(params)}").getQuery()
 		
 		rows = await temp.fetch_all(sql, *params)
 
@@ -294,18 +270,24 @@ class GLJournals(Common):
 
 				await sl_transaction.insert()	
 
-			gl_trans = GLTrans(
-				connection=conn,
-				transaction_date=self.journal_date,
-				account_id=10,
-				description='GL Example',
-				debit=20,
-				credit=20,
-				voucher=next_voucher,
-			)
+			for l in lines:
+				gl_trans = GLTrans(
+					connection=conn,
+					transaction_date=self.journal_date,
+					account_id=l.account_id,
+					description=l.description,
+					debit=l.debit,
+					credit=l.credit,
+					dim1_value_id=l.dim1_value_id,
+					dim2_value_id=l.dim2_value_id,
+					dim3_value_id=l.dim3_value_id,
+					dim4_value_id=l.dim4_value_id,
+					dim5_value_id=l.dim5_value_id,
+					voucher=next_voucher,
+				)
 
 			await gl_trans.insert()
-
+			
 			self.status = 'posted'
 
 			await self.update()
