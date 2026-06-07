@@ -10,8 +10,14 @@ from .UserRoleAssignments import UserRoleAssignments
 from .GLAccounts import GLAccounts
 from .GLDimensions import GLDimensions
 from .GLDimensionValues import GLDimensionValues
+from .GLAccountDimensions import GLAccountDimensions
 from .GLAccountDimensionRules import GLAccountDimensionRules
 from .GLAccountDimensionRuleValues import GLAccountDimensionRuleValues
+from .GLJournals import GLJournals
+from .GLJournalLines import GLJournalLines
+from .NumberingSchemes import NumberingSchemes
+from .SLTrans import SLTrans
+from .GLTrans import GLTrans
 
 __all__ = [
 	"Users",
@@ -26,6 +32,12 @@ __all__ = [
 	"GLAccounts",
 	"GLDimensions",
 	"GLDimensionValues",
+	"GLAccountDimensions",
 	"GLAccountDimensionRules",
 	"GLAccountDimensionRuleValues",
+	"GLJournals",
+	"GLJournalLines",
+	"NumberingSchemes",
+	"SLTrans",
+	"GLTrans"
 ]

@@ -1,0 +1,192 @@
+from decimal import Decimal
+from app.tables import GLJournals, GLJournalLines
+from app.classes.apiresponse import APIResponse
+from app.classes.appexception import AppException
+from app.services.db import db
+from app.services.numbering import get_next_number
+
+
+def _fmt_line(l: GLJournalLines) -> dict:
+    return {
+        "id": l.id,
+        "account_id": l.account_id,
+        "description": l.description,
+        "debit": float(l.debit or 0),
+        "credit": float(l.credit or 0),
+        "dim1_value_id": l.dim1_value_id,
+        "dim2_value_id": l.dim2_value_id,
+        "dim3_value_id": l.dim3_value_id,
+        "dim4_value_id": l.dim4_value_id,
+        "dim5_value_id": l.dim5_value_id,
+    }
+
+
+def _fmt(j: GLJournals, lines: list[GLJournalLines] | None = None) -> dict:
+    data = {
+        "id": j.id,
+        "journal_date": str(j.journal_date) if j.journal_date else None,
+        "reference": j.reference,
+        "memo": j.memo,
+        "status": j.status,
+        "created_at": str(j.created_at) if j.created_at else None,
+        "posted_at": str(j.posted_at) if j.posted_at else None,
+    }
+    if lines is not None:
+        data["lines"] = [_fmt_line(l) for l in lines]
+    return data
+
+
+def _basic_validation(lines) -> tuple[Decimal, Decimal]:
+    if len(lines) < 2:
+        raise AppException(400, "A journal must have at least two lines")
+
+    total_debit = sum(Decimal(str(l.debit)) for l in lines)
+    total_credit = sum(Decimal(str(l.credit)) for l in lines)
+
+    if abs(total_debit - total_credit) >= Decimal("0.01"):
+        raise AppException(400, f"Journal is not balanced: debits {total_debit} ≠ credits {total_credit}")
+
+    if total_debit == 0:
+        raise AppException(400, "Journal has no amounts")
+
+    return total_debit, total_credit
+
+
+async def list_journals():
+    journals = await GLJournals.findByCompany()
+
+    result = []
+    for j in journals:
+        lines = await GLJournalLines.findByJournal(j.id)
+        total = sum(float(l.debit or 0) for l in lines)
+        data = _fmt(j)
+        data["total_debit"] = total
+        result.append(data)
+
+    return APIResponse.ok("Journals fetched", result)
+
+
+async def create_journal(data):
+    
+    _basic_validation(data.lines)
+
+    async with db.transaction() as conn:
+        
+        reference = await get_next_number("gl_journal", conn)
+        
+        if not reference:
+            raise AppException(400, "No numbering scheme configured for gl_journal")
+
+        journal = GLJournals(
+            journal_date=data.journal_date,
+            reference=reference,
+            memo=data.memo,
+            connection=conn,
+        )
+        
+        journal = await journal.insert()
+
+        lines = []
+        
+        for l in data.lines:
+            line = GLJournalLines(
+                journal_id=journal.id,
+                account_id=l.account_id,
+                description=l.description,
+                debit=float(l.debit),
+                credit=float(l.credit),
+                dim1_value_id=l.dim1_value_id,
+                dim2_value_id=l.dim2_value_id,
+                dim3_value_id=l.dim3_value_id,
+                dim4_value_id=l.dim4_value_id,
+                dim5_value_id=l.dim5_value_id,
+                connection=conn,
+            )
+            lines.append(await line.insert())
+
+    return APIResponse.created("Journal created", _fmt(journal, lines))
+
+
+async def get_journal(journal_id: int):
+    journal = await GLJournals.find(journal_id)
+    if not journal:
+        return APIResponse.not_found("Journal not found")
+
+    lines = await GLJournalLines.findByJournal(journal_id)
+    return APIResponse.ok("Journal fetched", _fmt(journal, lines))
+
+
+async def update_journal(journal_id: int, data):
+    
+    journal = await GLJournals.find(journal_id)
+    
+    if not journal:
+        return APIResponse.not_found("Journal not found")
+    
+    if journal.status != "draft":
+        return APIResponse.bad_request("Only draft journals can be edited")
+
+    if data.journal_date is not None:
+        journal.journal_date = data.journal_date
+    if data.memo is not None:
+        journal.memo = data.memo
+
+    if data.lines is not None:
+        
+        _basic_validation(data.lines)
+        
+        async with db.transaction() as conn:
+            journal.connection = conn
+            await journal.update()
+            await GLJournalLines.deleteByJournal(journal_id, conn)
+            lines = []
+            for l in data.lines:
+                line = GLJournalLines(
+                    journal_id=journal_id,
+                    account_id=l.account_id,
+                    description=l.description,
+                    debit=float(l.debit),
+                    credit=float(l.credit),
+                    dim1_value_id=l.dim1_value_id,
+                    dim2_value_id=l.dim2_value_id,
+                    dim3_value_id=l.dim3_value_id,
+                    dim4_value_id=l.dim4_value_id,
+                    dim5_value_id=l.dim5_value_id,
+                    connection=conn,
+                )
+                lines.append(await line.insert())
+    else:
+        await journal.update()
+        lines = await GLJournalLines.findByJournal(journal_id)
+
+    return APIResponse.ok("Journal updated", _fmt(journal, lines))
+
+
+async def post_journal(journal_id: int):
+    
+	journal = await GLJournals.find(journal_id)
+    
+	if not journal:
+		return APIResponse.not_found("Journal not found")
+	if journal.status != "draft":
+		return APIResponse.bad_request("Only draft journals can be posted")
+
+	await journal.post()
+
+	lines = await GLJournalLines.findByJournal(journal_id)
+	return APIResponse.ok("Journal posted", _fmt(journal, lines))
+
+async def get_journals_list_page(
+        cursor: str,
+        journal_date: str | None = None, 
+		reference: str | None = None, 
+		memo: str | None = None,
+        status: str | None = None):
+
+	page = await GLJournals.getPagination(cursor, journal_date, reference, memo, status)
+	
+	return APIResponse.ok("Journals fetched", {
+		"items": [item.to_dict() for item in page.items],
+		"next_cursor": page.next_cursor,
+		"has_more": page.has_more,
+	})

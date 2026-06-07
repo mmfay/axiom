@@ -1,16 +1,51 @@
 from datetime import date
 from fastapi import APIRouter, Depends
-from app.services import gl_accounts, gl_dimensions, gl_account_rules, gl_reporting
+from app.services import gl_accounts, gl_dimensions, gl_account_rules, gl_reporting, gl_journals
 from app.services.session import require_permission
 from app.types.gl_accounts import CreateGLAccountRequest, UpdateGLAccountRequest, GLAccountFilters
 from app.types.gl_dimensions import CreateGLDimensionRequest, UpdateGLDimensionRequest, CreateGLDimensionValueRequest, UpdateGLDimensionValueRequest
 from app.types.gl_account_rules import CreateAccountRuleRequest, UpdateAccountRuleRequest, SetRuleValuesRequest
+from app.types.gl_journals import CreateGLJournalRequest, UpdateGLJournalRequest
 
 router = APIRouter()
 
 @router.get("/trial-balance")
 async def trial_balance(as_of: date | None = None, _=Depends(require_permission("General_ledger.Read"))):
 	return await gl_reporting.get_trial_balance(as_of or date.today())
+
+@router.get("/journals")
+async def list_journals(_=Depends(require_permission("General_ledger.Read"))):
+	return await gl_journals.list_journals()
+
+@router.get("/journals/listPage")
+async def list_journals(
+	cursor: str | None = None, 
+	journal_date: str | None = None,
+	reference: str | None = None,
+	memo: str | None = None,
+	status: str | None = None,
+	_=Depends(require_permission("General_ledger.Read"))):
+	return await gl_journals.get_journals_list_page(cursor, reference=reference, journal_date=journal_date, memo=memo, status=status)
+
+@router.post("/journals")
+async def create_journal(data: CreateGLJournalRequest, _=Depends(require_permission("General_ledger.Write"))):
+	return await gl_journals.create_journal(data)
+
+@router.get("/journals/{journal_id}")
+async def get_journal(journal_id: int, _=Depends(require_permission("General_ledger.Read"))):
+	return await gl_journals.get_journal(journal_id)
+
+@router.patch("/journals/{journal_id}")
+async def update_journal(journal_id: int, data: UpdateGLJournalRequest, _=Depends(require_permission("General_ledger.Write"))):
+	return await gl_journals.update_journal(journal_id, data)
+
+@router.post("/journals/{journal_id}/post")
+async def post_journal(journal_id: int, _=Depends(require_permission("General_ledger.Write"))):
+	return await gl_journals.post_journal(journal_id)
+
+@router.get("/accounts/all")
+async def list_all_accounts(_=Depends(require_permission("General_ledger.Read"))):
+	return await gl_accounts.list_all_active()
 
 @router.get("/accounts")
 async def list_accounts(

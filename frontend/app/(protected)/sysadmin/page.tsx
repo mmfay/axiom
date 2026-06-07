@@ -15,6 +15,12 @@ const RolesIcon = (
 	</svg>
 );
 
+const NumberingIcon = (
+	<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+	</svg>
+);
+
 export default function SysAdminPage() {
 
 	const { isSysAdmin } = useAuth();
@@ -25,6 +31,21 @@ export default function SysAdminPage() {
 				<h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Admin</h1>
 				<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage users, roles, and system configuration.</p>
 			</div>
+
+			<section className="mb-6">
+				<h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Configuration</h2>
+				<div className="flex flex-wrap gap-3">
+					<ModuleButton
+						label="Numbering Schemes"
+						description="Define auto-numbering formats per document type"
+						permission="System.Read"
+						variant="page"
+						href="/sysadmin/numbering"
+						color="emerald"
+						icon={NumberingIcon}
+					/>
+				</div>
+			</section>
 
 			<section className="mb-6">
 				<h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Access Control</h2>

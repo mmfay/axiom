@@ -40,6 +40,9 @@ class SQL:
 		# LIMIT clause
 		self._limit = None
 
+		# Tenant/company scoping flag
+		self._scoped = False
+
 	def select(self, table_name: str):
 		# Initialize SELECT query
 		self._action = "SELECT"
@@ -117,6 +120,10 @@ class SQL:
 		self._limit = placeholder
 		return self
 
+	def scoped(self):
+		self._scoped = True
+		return self
+
 	def returning(self, *columns):
 		# Add RETURNING clause (defaults to all columns if none specified)
 		self._returning = ", ".join(columns) if columns else "*"
@@ -127,6 +134,20 @@ class SQL:
 		if not self._action or not self._table:
 			raise ValueError("Action and table must be set")
 
+		# Resolve scoped fields/where non-mutably
+		fields = self._fields
+		values = self._values
+		where = list(self._where)
+
+		if self._scoped:
+			t = "current_setting('app.tenant_id', true)::integer"
+			c = "current_setting('app.company_id', true)::integer"
+			if self._action == "INSERT":
+				fields = f"tenant_id, company_id, {fields}" if fields else "tenant_id, company_id"
+				values = f"{t}, {c}, {values}" if values else f"{t}, {c}"
+			else:
+				where = [f"tenant_id = {t}", f"company_id = {c}"] + where
+
 		# Build base query depending on action type
 		if self._action == "SELECT":
 			query = f"SELECT {self._select_columns} FROM {self._table}"
@@ -135,9 +156,9 @@ class SQL:
 
 		elif self._action == "INSERT":
 			# INSERT requires both fields and values
-			if not self._fields or not self._values:
+			if not fields or not values:
 				raise ValueError("INSERT requires fields and values")
-			query = f"INSERT INTO {self._table} ({self._fields}) VALUES ({self._values})"
+			query = f"INSERT INTO {self._table} ({fields}) VALUES ({values})"
 
 		elif self._action == "UPDATE":
 			# UPDATE requires SET clause
@@ -152,8 +173,8 @@ class SQL:
 			raise ValueError("Invalid action")
 
 		# Append WHERE conditions if present
-		if self._where:
-			query += " WHERE " + " AND ".join(self._where)
+		if where:
+			query += " WHERE " + " AND ".join(where)
 
 		# Append GROUP BY clause if specified
 		if self._group_by:

@@ -58,7 +58,7 @@ class Sessions(Common):
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.active_role_id, self.expires_at)
+		row = await self.fetch_returning(sql, self.user_id, self.email, self.tenant_id, self.company_id, self.active_role_id, self.expires_at)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -84,7 +84,7 @@ class Sessions(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.company_id, self.active_role_id, self.id, self.tenant_id)
+		row = await self.fetch_returning(sql, self.company_id, self.active_role_id, self.id, self.tenant_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
