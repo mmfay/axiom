@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CachedPage, FilterSet } from "../types/data";
 import { ApiResponse } from "../api/response";
-import { getGLJournalsListPage, getJournal } from "../api/gl_journals";
+import { getGLJournalsListPage } from "../api/gl_journals";
 import { GLJournal } from "../types/gl_journals";
 
 export type GLJournalController = {
@@ -19,10 +19,6 @@ export type GLJournalController = {
 	showPrev: boolean;
 	showNext: boolean;
 	pageNumber: number;
-
-	fetchJournal: (id: number) => Promise<GLJournal | null>;
-
-	// filters
 	itemFilters: FilterSet;
 	setItemFiltersState: (filters: FilterSet) => void;
 	clearFilters: () => void;
@@ -34,7 +30,7 @@ export function useGLJournalController(): GLJournalController {
 	const [pageIndex, setPageIndex] = useState(0);
 
 	const [itemFilters, setItemFilters] = useState<FilterSet>({base_fields: []});
-	
+
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -45,22 +41,19 @@ export function useGLJournalController(): GLJournalController {
 	const showPrev = pageIndex > 0;
 	const showNext = Boolean(currentPage?.has_more);
 
-	// Tracks whether the component using this hook is still mounted
-	// Used to prevent calling setState after unmount when async requests resolve late
-	const aliveRef = useRef(true); 
+	const aliveRef = useRef(true);
 
 	useEffect(() => {
 		aliveRef.current = true;
 		return () => {
-			aliveRef.current = false;			
+			aliveRef.current = false;
 		}
 	}, []);
 
-	// gets new data
 	const reload = useCallback(async (filters?: FilterSet) => {
 
 		const activeFilters = filters ?? itemFilters;
-	
+
 		setLoading(true);
 		setError(null);
 
@@ -74,7 +67,7 @@ export function useGLJournalController(): GLJournalController {
 			}
 
 			const page = res.data;
-			
+
 			if (!aliveRef.current) return;
 			setPages([
 				{
@@ -89,7 +82,7 @@ export function useGLJournalController(): GLJournalController {
 		} catch (e: any) {
 
 			if (!aliveRef.current) return;
-			setError(e?.message ?? "Failed to load custom fields");
+			setError(e?.message ?? "Failed to load journals");
 			throw e;
 
 		} finally {
@@ -105,9 +98,8 @@ export function useGLJournalController(): GLJournalController {
 		reload();
 	}, [reload]);
 
-	// gets new data
 	const nextPage = useCallback(async () => {
-		
+
 		if (!currentPage) return;
 		if (!currentPage.has_more) return;
 
@@ -150,20 +142,17 @@ export function useGLJournalController(): GLJournalController {
 
 	}, [currentPage, pages, pageIndex, itemFilters]);
 
-	// gets new data
 	const prevPage = useCallback(() => {
 		setPageIndex((i) => Math.max(0, i - 1));
 	}, []);
 
-	// sets a filter state 
 	const setItemFiltersState = useCallback(
 		async (filters: FilterSet) => {
 			setItemFilters(filters);
 			setPages([]);
 			setPageIndex(0);
-
 			await reload(filters);
-		}, 
+		},
 		[reload]
 	);
 
@@ -172,49 +161,23 @@ export function useGLJournalController(): GLJournalController {
 			setItemFilters({base_fields: []});
 			setPages([]);
 			setPageIndex(0);
-			
 			await reload();
 		}
 		,[reload]
 	);
 
-	const fetchJournal = useCallback(async (id: number): Promise<GLJournal | null> => {
-
-		setLoading(true);
-		setError(null);
-
-		try {
-
-			const res = ApiResponse.handle(await getJournal(id));
-			if (!res.ok || !res.data) {
-				setError(res.message ?? "Journal not found");
-				return null;
-			}
-			return res.data;
-
-		} catch (e: any) {
-			setError(e?.message ?? "Failed to load journal");
-			return null;
-		} finally {
-			setLoading(false);
-		}
-		
-	}, []);
-
-	// make accessible outside of controller
 	return {
 		pages,
 		currentPage,
 		journals,
 		loading,
 		error,
-		reload, 
+		reload,
 		nextPage,
 		prevPage,
 		showPrev,
 		showNext,
 		pageNumber,
-		fetchJournal,
 		itemFilters,
 		setItemFiltersState,
 		clearFilters
