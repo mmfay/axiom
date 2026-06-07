@@ -1,28 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { use } from "react";
-import { GLJournal } from "@/app/lib/types/gl_journals";
-import { useGLJournalController } from "@/app/lib/hooks/useGLJournalController";
+import { useGLJournalDetail } from "@/app/lib/hooks/useGLJournalDetail";
 import JournalForm from "../_components/JournalForm";
 
 export default function JournalDetailPage({ params }: { params: Promise<{ id: string }> }) {
 
 	const { id } = use(params);
-	const { fetchJournal, loading, error } = useGLJournalController();
-	const [journal, setJournal] = useState<GLJournal | null>(null);
+	const detail = useGLJournalDetail();
 
 	useEffect(() => {
-		fetchJournal(Number(id)).then(setJournal);
-	}, [id, fetchJournal]);
+		detail.fetchJournal(Number(id));
+	}, [id]);
 
-	if (loading)
+	if (detail.loading)
 		return <div className="p-8 text-sm text-gray-400 dark:text-slate-500">Loading&hellip;</div>;
-	if (error)
-		return <div className="p-8 text-sm text-red-500 dark:text-red-400">{error}</div>;
-	if (!journal)
+
+	if (detail.error)
+		return <div className="p-8 text-sm text-red-500 dark:text-red-400">{detail.error}</div>;
+
+	if (!detail.journal)
 		return null;
 
-	return <JournalForm initial={journal} onMutate={setJournal} />;
-
+	return (
+		<JournalForm
+			journal={detail.journal}
+			accounts={detail.accounts}
+			dimensions={detail.dimensions}
+			saving={detail.saving}
+			posting={detail.posting}
+			voiding={detail.voiding}
+			onSave={detail.save}
+			onPost={detail.post}
+			onVoid={detail.void}
+		/>
+	);
 }
