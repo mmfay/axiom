@@ -47,16 +47,14 @@ class TrialBalanceView(Common):
 						"COALESCE(SUM(debit),  0) AS total_debit",
 						"COALESCE(SUM(credit), 0) AS total_credit",
 					)
-            	.where("tenant_id = $1")
-            	.where("company_id = $2")
-            	.where("is_active = TRUE")
-            	.where("(transaction_date IS NULL OR transaction_date <= $3)")
+            	.scoped()
+            	.where("(transaction_date IS NULL OR transaction_date <= $1)")
             	.group_by("account_number, name, account_type")
             	.having("COALESCE(SUM(debit), 0) > 0 OR COALESCE(SUM(credit), 0) > 0")
             	.order_by("account_number")
             	.getQuery()
         )
 
-        rows = await temp.fetch_all(sql, get_tenant(), get_company(), as_of)
+        rows = await temp.fetch_all(sql, as_of)
         
         return [cls.from_row(row, connection) for row in rows]

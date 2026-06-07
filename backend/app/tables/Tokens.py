@@ -59,7 +59,7 @@ class Tokens(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.user_id, self.token_hash, self.type, self.expires_at)
+		row = await self.fetch_returning(sql, self.user_id, self.token_hash, self.type, self.expires_at)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -87,7 +87,7 @@ class Tokens(Common):
 				.getQuery()
 		)
 		
-		row = await self.fetch_one(sql, self.used_at, self.id)
+		row = await self.fetch_returning(sql, self.used_at, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

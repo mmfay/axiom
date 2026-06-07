@@ -47,7 +47,7 @@ class Roles(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), self.name, self.description)
+		row = await self.fetch_returning(sql, get_tenant(), self.name, self.description)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -73,7 +73,7 @@ class Roles(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.name, self.description, self.id, self.tenant_id)
+		row = await self.fetch_returning(sql, self.name, self.description, self.id, self.tenant_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

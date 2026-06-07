@@ -1,7 +1,7 @@
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncIterator, Optional
 from app.services.config import settings
+from app.services.ctx import get_user, get_tenant, get_company
 from pathlib import Path
 
 import asyncpg
@@ -20,6 +20,7 @@ class Database:
 		self.schema_file = Path("ddl/schema.sql")
 		self.data_file = Path("ddl/data.sql")
 		self.index_file = Path("ddl/index.sql")
+		self.policy_file = Path("ddl/policies.sql")
 
 	async def connect(self) -> None:
 		# Initialize connection pool if not already created
@@ -54,12 +55,35 @@ class Database:
 		await pool.release(connection)
 
 	@asynccontextmanager
+	async def read(self) -> AsyncIterator[asyncpg.Connection]:
+		# Provide a read-only transactional scope with RLS context
+		# SET LOCAL scopes tenant/company to the transaction lifetime — Postgres cleans up automatically
+		conn = await self.acquire()
+		try:
+			async with conn.transaction(readonly=True):
+				try:
+					get_user()
+					await conn.execute(f"SET LOCAL app.tenant_id = {get_tenant()}")
+					await conn.execute(f"SET LOCAL app.company_id = {get_company()}")
+				except RuntimeError:
+					pass
+				yield conn
+		finally:
+			await self.release(conn)
+
+	@asynccontextmanager
 	async def transaction(self) -> AsyncIterator[asyncpg.Connection]:
 		# Provide a transactional connection scope
 		# Ensures commit/rollback handled automatically by asyncpg
 		conn = await self.acquire()
 		try:
 			async with conn.transaction():
+				try:
+					get_user()
+					await conn.execute(f"SET LOCAL app.tenant_id = {get_tenant()}")
+					await conn.execute(f"SET LOCAL app.company_id = {get_company()}")
+				except RuntimeError:
+					pass
 				yield conn
 		finally:
 			# Always release connection after transaction completes
@@ -77,6 +101,7 @@ class Database:
 			await self.apply_schema()
 			await self.apply_data()
 			await self.apply_indexes()
+			await self.apply_policies()
 
 	async def apply_schema(self) -> None:
 		# Load and execute schema.sql file against database
@@ -115,6 +140,18 @@ class Database:
 			await conn.execute(sql)
 
 		print("Indexes applied")
+
+	async def apply_policies(self) -> None:
+		if not self.policy_file.exists():
+			raise FileNotFoundError(f"Policy file not found: {self.policy_file}")
+
+		sql = self.policy_file.read_text(encoding="utf-8")
+		pool = self._ensure_pool()
+
+		async with pool.acquire() as conn:
+			await conn.execute(sql)
+
+		print("Policies applied")
                
 # Global database instance used across the application
 db = Database()

@@ -40,15 +40,11 @@ class Common:
 
 		Automatically manages connection lifecycle unless part of a transaction.
 		"""
-		conn = await self._get_connection()
-
 		if self._using_bound_connection():
-			return await conn.execute(sql, *args)
+			return await self._connection.execute(sql, *args)
 
-		try:
+		async with db.transaction() as conn:
 			return await conn.execute(sql, *args)
-		finally:
-			await db.release(conn)
 
 	async def fetch_one(self, sql: str, *args: Any) -> Optional[asyncpg.Record]:
 		"""
@@ -56,15 +52,23 @@ class Common:
 
 		Returns None if no record is found.
 		"""
-		conn = await self._get_connection()
-
 		if self._using_bound_connection():
+			return await self._connection.fetchrow(sql, *args)
+
+		async with db.read() as conn:
 			return await conn.fetchrow(sql, *args)
 
-		try:
+	async def fetch_returning(self, sql: str, *args: Any) -> Optional[asyncpg.Record]:
+		"""
+		Execute a write statement with RETURNING and fetch the resulting row.
+
+		Use this for INSERT/UPDATE/DELETE ... RETURNING instead of fetch_one.
+		"""
+		if self._using_bound_connection():
+			return await self._connection.fetchrow(sql, *args)
+
+		async with db.transaction() as conn:
 			return await conn.fetchrow(sql, *args)
-		finally:
-			await db.release(conn)
 
 	async def fetch_all(self, sql: str, *args: Any) -> list[asyncpg.Record]:
 		"""
@@ -72,32 +76,35 @@ class Common:
 
 		Always returns a list (empty if no results).
 		"""
-		conn = await self._get_connection()
-
 		if self._using_bound_connection():
-			rows = await conn.fetch(sql, *args)
+			rows = await self._connection.fetch(sql, *args)
 			return list(rows)
 
-		try:
+		async with db.read() as conn:
 			rows = await conn.fetch(sql, *args)
 			return list(rows)
-		finally:
-			await db.release(conn)
 
 	async def fetch_value(self, sql: str, *args: Any) -> Any:
 		"""
 		Fetch a single scalar value (e.g., COUNT, SUM, ID).
 		"""
-		conn = await self._get_connection()
-
 		if self._using_bound_connection():
-			return await conn.fetchval(sql, *args)
+			return await self._connection.fetchval(sql, *args)
 
-		try:
+		async with db.read() as conn:
 			return await conn.fetchval(sql, *args)
-		finally:
-			await db.release(conn)
 			
+	def to_dict(self) -> dict:
+		result = {}
+		for key, value in self.__dict__.items():
+			if key.startswith("_"):
+				continue
+			if hasattr(value, "isoformat"):
+				result[key] = value.isoformat()
+			else:
+				result[key] = value
+		return result
+
 	@classmethod
 	def from_row(cls, row: dict, connection=None):
 		"""

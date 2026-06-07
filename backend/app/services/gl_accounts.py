@@ -14,6 +14,10 @@ def _fmt(a: GLAccounts) -> dict:
 		"is_active": a.is_active,
 	}
 
+async def list_all_active():
+	accounts = await GLAccounts.findByCompany(get_company())
+	return APIResponse.ok("Accounts fetched", [_fmt(a) for a in accounts if a.is_active])
+
 async def list_accounts(cursor: str | None, filters: GLAccountFilters):
 	
 	page = await GLAccounts.getAccountsPagination(cursor=cursor, filters=filters)

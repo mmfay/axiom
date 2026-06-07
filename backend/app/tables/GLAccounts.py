@@ -65,7 +65,7 @@ class GLAccounts(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
 			get_tenant(),
 			get_company(),
@@ -103,7 +103,7 @@ class GLAccounts(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(
+		row = await self.fetch_returning(
 			sql,
 			get_tenant(),
 			get_company(),

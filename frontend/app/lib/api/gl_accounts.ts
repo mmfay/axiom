@@ -2,6 +2,10 @@ import { getJSON, patchJSON, postJSON } from "./submissions";
 import { APIResult, CursorPage, FilterSet } from "../types/data";
 import { GLAccount, GLAccountCreate, GLAccountPatch } from "../types/gl_accounts";
 
+export async function getAllAccounts(): Promise<APIResult<GLAccount[]>> {
+	return getJSON("/gl/accounts/all");
+}
+
 export async function getGLAccountsListPage(filters?: FilterSet, cursor?: string): Promise<APIResult<CursorPage<GLAccount>>> {
 	const params: Record<string, string> = {};
 	if (cursor) params.cursor = cursor;

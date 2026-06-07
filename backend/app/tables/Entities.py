@@ -45,7 +45,7 @@ class Entities(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), self.name)
+		row = await self.fetch_returning(sql, get_tenant(), self.name)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -71,7 +71,7 @@ class Entities(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.tenant_id, self.name, self.is_active, self.id)
+		row = await self.fetch_returning(sql, self.tenant_id, self.name, self.is_active, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")

@@ -59,7 +59,7 @@ class Users(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, self.email, self.password, self.user_id, get_tenant(), get_company())
+		row = await self.fetch_returning(sql, self.email, self.password, self.user_id, get_tenant(), get_company())
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -83,7 +83,7 @@ class Users(Common):
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), self.version_id, self.id, self.email, self.password, self.is_enabled, self.default_role_id, self.default_company_id)
+		row = await self.fetch_returning(sql, get_tenant(), self.version_id, self.id, self.email, self.password, self.is_enabled, self.default_role_id, self.default_company_id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
