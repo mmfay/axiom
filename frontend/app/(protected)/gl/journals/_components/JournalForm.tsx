@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import DimensionPicker from "@/app/components/GL/DimensionPicker";
+import ErrorBanner from "@/app/components/ErrorBanner";
 import { GLJournal, GLJournalLine, CreateGLJournalRequest } from "@/app/lib/types/gl_journals";
 import { GLAccount } from "@/app/lib/types/gl_accounts";
 import { DimensionWithValues } from "@/app/lib/types/gl_dimensions";
@@ -13,9 +14,11 @@ interface Props {
 	saving: boolean;
 	posting: boolean;
 	voiding: boolean;
+	error?: string | null;
 	onSave: (payload: CreateGLJournalRequest) => void;
 	onPost: (payload: CreateGLJournalRequest) => void;
 	onVoid: () => void;
+	onDismissError?: () => void;
 }
 
 function today() {
@@ -42,7 +45,7 @@ const inputClass =
 const numClass =
 	"text-sm px-2 py-1.5 w-28 bg-transparent border border-gray-200 dark:border-white/10 rounded-md text-right tabular-nums text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50";
 
-export default function JournalForm({ journal, accounts, dimensions, saving, posting, voiding, onSave, onPost, onVoid }: Props) {
+export default function JournalForm({ journal, accounts, dimensions, saving, posting, voiding, error, onSave, onPost, onVoid, onDismissError }: Props) {
 
 	const isNew = !journal;
 	const isPosted = journal?.status === "posted";
@@ -90,6 +93,10 @@ export default function JournalForm({ journal, accounts, dimensions, saving, pos
 	}
 
 	return (
+		<>
+		{error && onDismissError && (
+			<ErrorBanner message={error} onDismiss={onDismissError} />
+		)}
 		<div className="p-8 flex flex-col gap-6 max-w-6xl">
 
 			{/* Header */}
@@ -311,5 +318,6 @@ export default function JournalForm({ journal, accounts, dimensions, saving, pos
 				</div>
 			</div>
 		</div>
+		</>
 	);
 }

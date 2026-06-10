@@ -14,9 +14,11 @@ export default function NewJournalPage() {
 			saving={detail.saving}
 			posting={detail.posting}
 			voiding={detail.voiding}
+			error={detail.error}
 			onSave={detail.save}
 			onPost={detail.post}
 			onVoid={detail.void}
+			onDismissError={detail.clearError}
 		/>
 	);
 }
