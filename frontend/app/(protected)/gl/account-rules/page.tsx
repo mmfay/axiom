@@ -11,6 +11,7 @@ import { AccountRule, CreateAccountRuleRequest } from "@/app/lib/types/gl_accoun
 import RuleMapModal from "@/app/components/Modals/GL/RuleMapModal";
 import SecureButton from "@/app/components/SecureButton";
 import { usePermission } from "@/app/lib/hooks/usePermission";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -535,6 +536,9 @@ export default function AccountRulesPage() {
 	const [rules, setRules] = useState<AccountRule[]>([]);
 	const [loadingRules, setLoadingRules] = useState(false);
 
+	const [error, setError] = useState<string | null>(null);
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
+
 	// Load accounts
 	useEffect(() => {
 		(async () => {
@@ -542,6 +546,9 @@ export default function AccountRulesPage() {
 			try {
 				const res = ApiResponse.handle(await getGLAccountsListPage());
 				if (res.ok && res.data) setAccounts(res.data.items);
+				else setError(res.message ?? "Failed to load accounts");
+			} catch {
+				setError("Failed to load accounts");
 			} finally {
 				setLoadingAccounts(false);
 			}
@@ -554,7 +561,7 @@ export default function AccountRulesPage() {
 			setLoadingDims(true);
 			try {
 				const dimRes = ApiResponse.handle(await getGLDimensions());
-				if (!dimRes.ok || !dimRes.data) return;
+				if (!dimRes.ok || !dimRes.data) { setError(dimRes.message ?? "Failed to load dimensions"); return; }
 
 				const active = dimRes.data.filter((d) => d.is_active);
 
@@ -568,6 +575,8 @@ export default function AccountRulesPage() {
 						values: (ApiResponse.handle(valueResults[i]).data ?? []),
 					}))
 				);
+			} catch {
+				setError("Failed to load dimensions");
 			} finally {
 				setLoadingDims(false);
 			}
@@ -581,6 +590,9 @@ export default function AccountRulesPage() {
 		try {
 			const res = ApiResponse.handle(await getAccountRules(account.id));
 			if (res.ok && res.data) setRules(res.data.rules);
+			else setError(res.message ?? "Failed to load rules");
+		} catch {
+			setError("Failed to load rules");
 		} finally {
 			setLoadingRules(false);
 		}
@@ -594,6 +606,9 @@ export default function AccountRulesPage() {
 
 	return (
 		<div className="flex gap-0 h-full">
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 			{/* Sidebar */}
 			<div className="w-72 flex-shrink-0 border-r border-gray-200 dark:border-white/10 flex flex-col">
 				<div className="p-4 border-b border-gray-200 dark:border-white/10">

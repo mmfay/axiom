@@ -8,6 +8,7 @@ import RoleCreateModal from "@/app/components/Modals/Roles/RoleCreate";
 import RoleEditModal from "@/app/components/Modals/Roles/RoleEdit";
 import RolePermissionsModal from "@/app/components/Modals/Roles/RolePermissions";
 import PageHandler from "@/app/components/Tables/PageHandler";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 export default function RolesPage() {
 	
@@ -29,6 +30,7 @@ export default function RolesPage() {
 	} = useRolesController();
 
 	const [showCreate, setShowCreate] = useState(false);
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 	const [editRole, setEditRole] = useState<Role | null>(null);
 	const [permissionsRole, setPermissionsRole] = useState<Role | null>(null);
 
@@ -68,7 +70,9 @@ export default function RolesPage() {
 				/>
 			)}
 
-			{error && <p className="text-red-500 text-sm">{error}</p>}
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 
 			<PageHandler
 				pageLength={roles.length}

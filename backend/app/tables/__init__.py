@@ -10,7 +10,6 @@ from .UserRoleAssignments import UserRoleAssignments
 from .GLAccounts import GLAccounts
 from .GLDimensions import GLDimensions
 from .GLDimensionValues import GLDimensionValues
-from .GLAccountDimensions import GLAccountDimensions
 from .GLAccountDimensionRules import GLAccountDimensionRules
 from .GLAccountDimensionRuleValues import GLAccountDimensionRuleValues
 from .GLJournals import GLJournals
@@ -32,7 +31,6 @@ __all__ = [
 	"GLAccounts",
 	"GLDimensions",
 	"GLDimensionValues",
-	"GLAccountDimensions",
 	"GLAccountDimensionRules",
 	"GLAccountDimensionRuleValues",
 	"GLJournals",

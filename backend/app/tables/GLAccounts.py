@@ -5,6 +5,7 @@ from app.services.sql import SQL
 from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
 from app.services.ctx import get_tenant, get_company
 from app.classes.appexception import AppException
+from app.classes.apiresponse import APIResponse
 
 if TYPE_CHECKING:
 	from app.types.gl_accounts import GLAccountFilters
@@ -59,16 +60,15 @@ class GLAccounts(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, account_number, name, account_type, normal_balance, description")
-					.values("$1, $2, $3, $4, $5, $6, $7")
+					.fields("account_number, name, account_type, normal_balance, description")
+					.values("$1, $2, $3, $4, $5")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.account_number,
 			self.name,
 			self.account_type,
@@ -77,7 +77,7 @@ class GLAccounts(Common):
 		)
 
 		if row is None:
-			raise ValueError("Insert Failed: No row returned")
+			APIResponse.bad_request("Account was not able to be added, try again.")
 
 		self.id = row["id"]
 		self.tenant_id = row["tenant_id"]
@@ -90,23 +90,20 @@ class GLAccounts(Common):
 	async def update(self) -> "GLAccounts":
 
 		if self.id is None:
-			raise ValueError("GLAccount must have an id to update")
+			APIResponse.bad_request("GL Account must have an id to update")
 
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("account_number = $4, name = $5, account_type = $6, normal_balance = $7, description = $8, is_active = $9")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("account_number = $2, name = $3, account_type = $4, normal_balance = $5, description = $6, is_active = $7")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.id,
 			self.account_number,
 			self.name,
@@ -117,7 +114,7 @@ class GLAccounts(Common):
 		)
 
 		if row is None:
-			raise ValueError("Update Failed: No row returned")
+			APIResponse.bad_request("Failed to update record")
 
 		return self
 
@@ -128,13 +125,11 @@ class GLAccounts(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.where("id = $1")
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -175,17 +170,16 @@ class GLAccounts(Common):
 				payload = decode_cursor(cursor)
 				last_id = int(payload.get("id", 0))
 			except Exception:
-				raise AppException(400, "Invalid cursor")
+				APIResponse.bad_request("Issue with Pages, refresh and try again.")
 
-		params: list = [get_tenant(), get_company(), last_id]
+		params: list = [last_id]
 
 		builder = (
 			SQL()
 				.select(cls.table_name)
 				.columns("id", "account_number", "name", "account_type", "normal_balance", "description", "is_active")
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("id > $3")
+				.where("id > $1")
+				.scoped()
 		)
 
 		if filters:
@@ -223,18 +217,18 @@ class GLAccounts(Common):
 
 	@classmethod
 	async def findByAccountNumber(cls, account_number: str, connection=None) -> "GLAccounts | None":
+
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("account_number = $3")
+				.where("account_number = $1")
+				.scoped()
 			.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), account_number)
+		row = await temp.fetch_one(sql, account_number)
 
 		if row is None:
 			return None

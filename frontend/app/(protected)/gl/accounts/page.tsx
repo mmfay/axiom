@@ -9,6 +9,7 @@ import { useGLAccountsController } from "@/app/lib/hooks/useGLAccountsController
 import { useFilterController } from "@/app/lib/hooks/useFilterController";
 import { FILTER_FIELDS_GL_ACCOUNTS } from "@/app/lib/staticData";
 import { GLAccount } from "@/app/lib/types/gl_accounts";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 const TYPE_COLORS: Record<string, string> = {
 	Asset:     "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
@@ -37,6 +38,7 @@ export default function GLAccountsPage() {
 
 	const [showCreate, setShowCreate] = useState(false);
 	const [editAccount, setEditAccount] = useState<GLAccount | null>(null);
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 	const filter = useFilterController(FILTER_FIELDS_GL_ACCOUNTS);
 
 	function handleApply(next: Record<string, string>) {
@@ -102,7 +104,9 @@ export default function GLAccountsPage() {
 				onClear={handleClear}
 			/>
 
-			{error && <p className="text-red-500 text-sm">{error}</p>}
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 
 			<PageHandler
 				pageLength={accounts.length}

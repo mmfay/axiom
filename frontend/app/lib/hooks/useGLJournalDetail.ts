@@ -23,6 +23,7 @@ export type GLJournalDetail = {
 	save: (payload: CreateGLJournalRequest) => Promise<void>;
 	post: (payload: CreateGLJournalRequest) => Promise<void>;
 	void: () => Promise<void>;
+	clearError: () => void;
 };
 
 export function useGLJournalDetail(): GLJournalDetail {
@@ -74,7 +75,8 @@ export function useGLJournalDetail(): GLJournalDetail {
 
 		try {
 			const res = ApiResponse.handle(await getJournal(id));
-			if (!res.ok || !res.data) throw new Error(res.message ?? "Journal not found");
+			if (!res.ok || !res.data) 
+				throw new Error(res.message ?? "Journal not found");
 			setJournal(res.data);
 		} catch (e: any) {
 			setError(e?.message ?? "Failed to load journal");
@@ -155,6 +157,8 @@ export function useGLJournalDetail(): GLJournalDetail {
 
 	}, [journal]);
 
+	const clearError = useCallback(() => setError(null), []);
+
 	return {
 		journal,
 		accounts,
@@ -168,6 +172,7 @@ export function useGLJournalDetail(): GLJournalDetail {
 		save,
 		post,
 		void: void_,
+		clearError,
 	};
 	
 }
