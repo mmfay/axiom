@@ -5,6 +5,7 @@ import { useGLDimensionsController } from "@/app/lib/hooks/useGLDimensionsContro
 import { GLDimension, GLDimensionCreate, GLDimensionPatch, GLDimensionValue, GLDimensionValueCreate } from "@/app/lib/types/gl_dimensions";
 import { getGLDimensionValues, createGLDimensionValue, updateGLDimensionValue } from "@/app/lib/api/gl_dimensions";
 import { ApiResponse } from "@/app/lib/api/response";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 const SLOTS = [1, 2, 3, 4, 5] as const;
 
@@ -282,6 +283,7 @@ function DimensionRow({ slot, dimension, onCreate, onUpdate }: DimensionRowProps
 export default function GLDimensionsPage() {
 
 	const { dimensions, loading, error, onCreate, onUpdate } = useGLDimensionsController();
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 
 	const dimBySlot = Object.fromEntries(dimensions.map((d) => [d.slot, d]));
 
@@ -294,7 +296,9 @@ export default function GLDimensionsPage() {
 				</p>
 			</div>
 
-			{error && <p className="text-sm text-red-500">{error}</p>}
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 
 			<div className="border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden">
 				{loading ? (
