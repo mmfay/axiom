@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ApiResponse } from "@/app/lib/api/response";
 import { getTrialBalance } from "@/app/lib/api/gl_reporting";
 import { TrialBalance } from "@/app/lib/types/gl_reporting";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 function today(): string {
 	return new Date().toISOString().split("T")[0];
@@ -23,6 +24,7 @@ export default function TrialBalancePage() {
 	const [data, setData] = useState<TrialBalance | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 
 	async function load(date: string) {
 		setLoading(true);
@@ -72,7 +74,9 @@ export default function TrialBalancePage() {
 				</div>
 			</div>
 
-			{error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 
 			{data && (
 				<div className="flex flex-col gap-3">
