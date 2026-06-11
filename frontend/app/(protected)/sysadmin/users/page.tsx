@@ -11,7 +11,7 @@ import UserEdit from "@/app/components/Modals/Users/UserEdit";
 import UserRoles from "@/app/components/Modals/Users/UserRoles";
 import { Users } from "@/app/lib/types/users";
 import { FILTER_FIELDS_USER } from "@/app/lib/staticData";
-
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 export default function UsersPage() {
 
@@ -39,6 +39,7 @@ export default function UsersPage() {
 	const filter = useFilterController(FILTER_FIELDS_USER);
 
 	const [showCreate, setShowCreate] = useState(false);
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 	const [editUser, setEditUser] = useState<Users | null>(null);
 	const [rolesUser, setRolesUser] = useState<Users | null>(null);
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -118,8 +119,8 @@ export default function UsersPage() {
 				/>
 			)}
 
-			{error && (
-				<p className="text-red-500 text-sm">{error}</p>
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
 			)}
 
 			<PageHandler

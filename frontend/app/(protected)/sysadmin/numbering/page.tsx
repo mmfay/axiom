@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ApiResponse } from "@/app/lib/api/response";
 import { getSchemes, createScheme, updateScheme } from "@/app/lib/api/numbering";
 import { NumberingScheme, UpdateNumberingSchemeRequest, DOCUMENT_TYPE_LABELS } from "@/app/lib/types/numbering";
+import ErrorBanner from "@/app/components/ErrorBanner";
 
 const KNOWN_TYPES = Object.keys(DOCUMENT_TYPE_LABELS);
 
@@ -49,6 +50,7 @@ export default function NumberingSchemesPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
+	const [dismissedError, setDismissedError] = useState<string | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [editScheme, setEditScheme] = useState<NumberingScheme | null>(null);
 	const [form, setForm] = useState<FormState>(blankForm());
@@ -146,7 +148,9 @@ export default function NumberingSchemesPage() {
 				</button>
 			</div>
 
-			{error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+			{error && error !== dismissedError && (
+				<ErrorBanner message={error} onDismiss={() => setDismissedError(error)} />
+			)}
 
 			{/* Form panel */}
 			{formVisible && (
