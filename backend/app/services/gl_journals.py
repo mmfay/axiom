@@ -28,6 +28,7 @@ def _fmt(j: GLJournals, lines: list[GLJournalLines] | None = None) -> dict:
         "reference": j.reference,
         "memo": j.memo,
         "status": j.status,
+        "workflow_status": j.workflow_status,
         "created_at": str(j.created_at) if j.created_at else None,
         "posted_at": str(j.posted_at) if j.posted_at else None,
     }

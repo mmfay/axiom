@@ -2,13 +2,12 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant, get_company
 from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
-from app.classes.appexception import AppException
 from app.classes.apiresponse import APIResponse
 from app.tables.GLJournalLines import GLJournalLines
 from app.tables.SLTrans import SLTrans
 from app.tables.GLTrans import GLTrans
+from app.tables.WorkflowDefinitions import WorkflowDefinitions
 from app.services.numbering import get_next_number
 from app.classes.glvalidation import GLValidation
 from datetime import date
@@ -26,6 +25,7 @@ class GLJournals(Common):
 	reference: Optional[str] = None
 	memo: Optional[str] = None
 	status: Optional[str] = None
+	workflow_status: Optional[str] = None
 	created_at: Optional[str] = None
 	posted_at: Optional[str] = None
 
@@ -40,6 +40,7 @@ class GLJournals(Common):
 		reference: Optional[str] = None,
 		memo: Optional[str] = None,
 		status: Optional[str] = None,
+		workflow_status: Optional[str] = None,
 		created_at: Optional[str] = None,
 		posted_at: Optional[str] = None,
 		connection=None,
@@ -52,6 +53,7 @@ class GLJournals(Common):
 		self.reference = reference
 		self.memo = memo
 		self.status = status
+		self.workflow_status = workflow_status
 		self.created_at = created_at
 		self.posted_at = posted_at
 
@@ -93,7 +95,7 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("journal_date = $2, reference = $3, memo = $4, status = $5")
+					.set("journal_date = $2, reference = $3, memo = $4, status = $5, workflow_status = $6")
 					.where("id = $1")
 					.scoped()
 					.returning()
@@ -107,6 +109,7 @@ class GLJournals(Common):
 			self.reference,
 			self.memo,
 			self.status,
+			self.workflow_status,
 		)
 
 		if row is None:
@@ -176,7 +179,7 @@ class GLJournals(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.columns("id", "journal_date", "reference", "memo", "status", "company_id", "tenant_id")
+					.columns("id", "journal_date", "reference", "memo", "status", "workflow_status", "company_id", "tenant_id")
 					.where("id > $1")
 					.scoped()
 		)
@@ -218,14 +221,19 @@ class GLJournals(Common):
 		if not self.reference:
 			APIResponse.bad_request("Journal does not have a Reference ID")
 
+		if not self.workflow_status == "approved":
+			workflow = await WorkflowDefinitions.find_by_type("gl_journal")
+			if workflow.is_active:
+				APIResponse.bad_request("Journal is not approved.")
+
 		# Validate Journal
-		# check sums of credits/debits make sure they balance
-		# check that accounts exist
-		# check that dimensions are valid for accounts
-		# post SL Trans
-		# post GL Trans
-		# post Journal
-		# if 1 of 3 posts fails, then rollback
+			# check sums of credits/debits make sure they balance
+			# check that accounts exist
+			# check that dimensions are valid for accounts
+			# post SL Trans
+			# post GL Trans
+			# post Journal
+			# if 1 of 3 posts fails, then rollback
 		async with db.transaction() as conn:
 
 			next_voucher = await get_next_number("voucher", conn)
