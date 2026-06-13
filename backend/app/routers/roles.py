@@ -5,6 +5,10 @@ from app.types.roles import CreateRoleRequest, UpdateRoleRequest
 
 router = APIRouter()
 
+@router.get("/all")
+async def list_all_roles(_=Depends(require_permission())):
+	return await roles.list_all_roles()
+
 @router.get("")
 async def list_roles(cursor: str | None = None, _=Depends(require_permission())):
 	return await roles.list_roles(cursor)

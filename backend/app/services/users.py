@@ -131,6 +131,14 @@ async def delete_user(rec_id: int):
 	return APIResponse.ok("User deleted")
 
 
+async def list_all_users():
+
+	all_users = await Users.findAll()
+
+	return APIResponse.ok("Users fetched", [
+		{"id": u.id, "email": u.email} for u in all_users
+	])
+
 async def get_users_list_page(cursor: str | None = None, email: str | None = None, user_id: str | None = None, is_enabled: bool | None = None):
 
 	page = await Users.getUserPagination(cursor, email=email, user_id=user_id, is_enabled=is_enabled)

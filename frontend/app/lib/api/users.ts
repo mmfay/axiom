@@ -1,6 +1,10 @@
 import { deleteJSON, getJSON, patchJSON, postJSON } from "./submissions";
 import { APIResult, CursorPage, FilterSet } from "../types/data";
-import { Users, UsersCreate, UsersPatch } from "../types/users";
+import { UserOption, Users, UsersCreate, UsersPatch } from "../types/users";
+
+export async function getAllUsers(): Promise<APIResult<UserOption[]>> {
+	return getJSON("/users/all");
+}
 
 export async function getUsersListPage(filters?: FilterSet, cursor?: string): Promise<APIResult<CursorPage<Users>>> {
 	const params: Record<string, string> = {};
