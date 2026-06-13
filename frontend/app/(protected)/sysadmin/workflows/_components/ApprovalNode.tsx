@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Role } from "@/app/lib/types/roles";
-import { Users } from "@/app/lib/types/users";
+import { RoleOption } from "@/app/lib/types/roles";
+import { UserOption } from "@/app/lib/types/users";
 
 export interface ApprovalNodeData extends Record<string, unknown> {
 	label: string;
 	approver_type: "role" | "user" | null;
 	approver_id: number | null;
-	roles: Role[];
-	users: Users[];
+	roles: RoleOption[];
+	users: UserOption[];
 	onChange: (id: string, patch: Partial<ApprovalNodeData>) => void;
 	onDelete: (id: string) => void;
 }
