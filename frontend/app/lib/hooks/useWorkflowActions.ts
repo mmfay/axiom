@@ -14,6 +14,7 @@ export type WorkflowActions = {
 	submit: () => Promise<void>;
 	approve: () => Promise<void>;
 	reject: () => Promise<void>;
+	onStepSelect: (step: { id: string; label: string }) => void;
 };
 
 export function useWorkflowActions(
@@ -98,6 +99,12 @@ export function useWorkflowActions(
 
 	const clearError = useCallback(() => setError(null), []);
 
-	return { workflowActive, submitting, approving, rejecting, error, clearError, submit, approve, reject };
+	const onStepSelect = useCallback((step: { id: string; label: string }) => {
+		if (step.id === "submit") submit();
+		if (step.id === "approve") approve();
+		if (step.id === "reject") reject();
+	}, [submit, approve, reject]);
+
+	return { workflowActive, submitting, approving, rejecting, error, clearError, submit, approve, reject, onStepSelect };
 	
 }

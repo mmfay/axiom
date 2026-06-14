@@ -5,7 +5,6 @@ import {
 	ReactFlow,
 	Background,
 	Controls,
-	MiniMap,
 	addEdge,
 	useNodesState,
 	useEdgesState,
@@ -181,7 +180,6 @@ function WorkflowEditor({ documentType, label, roles, users, detailLoading, onBa
 					<ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} fitView className="bg-gray-50 dark:bg-neutral-950">
 						<Background gap={16} size={1} className="!text-gray-200 dark:!text-white/5" />
 						<Controls className="[&_button]:bg-white dark:[&_button]:bg-neutral-900 [&_button]:border-gray-200 dark:[&_button]:border-white/10" />
-						<MiniMap className="!bg-gray-100 dark:!bg-neutral-900 !border-gray-200 dark:!border-white/10" />
 					</ReactFlow>
 				)}
 			</div>
