@@ -68,6 +68,22 @@ class WorkflowNodes(Common):
 		return [cls.from_row(r, connection) for r in rows]
 
 	@classmethod
+	async def find_approval_nodes(cls, workflow_id: int, connection=None) -> list["WorkflowNodes"]:
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+					.scoped(company=False)
+					.where("workflow_id = $1")
+					.where("node_type = 'approval'")
+				.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, workflow_id)
+		return [cls.from_row(r, connection) for r in rows]
+
+	@classmethod
 	async def delete_by_workflow(cls, workflow_id: int, connection=None) -> None:
 
 		temp = cls(connection=connection)
@@ -75,8 +91,8 @@ class WorkflowNodes(Common):
 		sql = (
 			SQL()
 				.delete(cls.table_name)
-				.scoped(company=False)
-				.where("workflow_id = $1")
+					.scoped(company=False)
+					.where("workflow_id = $1")
 				.getQuery()
 		)
 

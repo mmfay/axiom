@@ -20,3 +20,15 @@ async def toggle_workflow(document_type: str, data: ToggleWorkflowRequest, _=Dep
 @router.put("/{document_type}/graph")
 async def save_graph(document_type: str, data: SaveGraphRequest, _=Depends(require_permission("Workflow.Write"))):
 	return await workflow.save_graph(document_type, data)
+
+@router.post("/{document_type}/{record_id}/submit")
+async def submit_workflow(document_type: str, record_id: int, _=Depends(require_permission())):
+	return await workflow.submit_workflow(document_type, record_id)
+
+@router.post("/{document_type}/{record_id}/approve")
+async def approve_workflow(document_type: str, record_id: int, _=Depends(require_permission())):
+	return await workflow.approve_workflow(document_type, record_id)
+
+@router.post("/{document_type}/{record_id}/reject")
+async def reject_workflow(document_type: str, record_id: int, _=Depends(require_permission())):
+	return await workflow.reject_workflow(document_type, record_id)

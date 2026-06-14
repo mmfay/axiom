@@ -140,6 +140,25 @@ class GLJournals(Common):
 		return self
 
 	@classmethod
+	async def update_workflow_status(cls, record_id: int, status: str, connection=None) -> bool:
+		
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.update(cls.table_name)
+					.set("workflow_status = $2")
+					.where("id = $1")
+					.scoped()
+					.returning()
+				.getQuery()
+		)
+
+		row = await temp.fetch_returning(sql, record_id, status)
+		
+		return row is not None
+
+	@classmethod
 	async def find(cls, id: int, connection=None) -> "GLJournals | None":
 		temp = cls(connection=connection)
 

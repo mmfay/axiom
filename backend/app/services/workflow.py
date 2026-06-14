@@ -1,4 +1,5 @@
 from app.tables import WorkflowDefinitions, WorkflowNodes, WorkflowEdges
+from app.classes.workflowhandler import WorkflowHandler
 from app.classes.apiresponse import APIResponse
 from app.services.db import db
 
@@ -118,3 +119,33 @@ async def save_graph(document_type: str, data):
 			await edge.insert()
 
 	return APIResponse.ok("Workflow saved")
+
+
+async def submit_workflow(document_type: str, record_id: int):
+
+	handler = WorkflowHandler(document_type, record_id)
+
+	await handler.check_workflow()
+	await handler.update_workflow_status("pending")
+
+	return APIResponse.ok("Submitted for approval")
+
+
+async def approve_workflow(document_type: str, record_id: int):
+
+	handler = WorkflowHandler(document_type, record_id)
+
+	await handler.check_workflow()
+	await handler.update_workflow_status("approved")
+
+	return APIResponse.ok("Approved")
+
+
+async def reject_workflow(document_type: str, record_id: int):
+
+	handler = WorkflowHandler(document_type, record_id)
+
+	await handler.check_workflow()
+	await handler.update_workflow_status("rejected")
+	
+	return APIResponse.ok("Rejected")
