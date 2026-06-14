@@ -1,7 +1,7 @@
 import { deleteJSON, getJSON, patchJSON, postJSON } from "./submissions";
 import { APIResult, CursorPage } from "../types/data";
 import { UserRolesData } from "../types/users";
-import { Role, RoleCreate, RolePatch, RolePermissionsData } from "../types/roles";
+import { Role, RoleCreate, RoleOption, RolePatch, RolePermissionsData } from "../types/roles";
 
 export async function getUserRoles(userId: number): Promise<APIResult<UserRolesData>> {
 	return getJSON(`/users/${userId}/roles`);
@@ -17,6 +17,10 @@ export async function removeUserRole(userId: number, roleId: number): Promise<AP
 
 export async function getRolesListPage(cursor?: string): Promise<APIResult<CursorPage<Role>>> {
 	return getJSON("/roles", cursor ? { cursor } : undefined);
+}
+
+export async function getAllRoles(): Promise<APIResult<RoleOption[]>> {
+	return getJSON("/roles/all");
 }
 
 export async function createRole(body: RoleCreate): Promise<APIResult<Role>> {

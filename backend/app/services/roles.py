@@ -11,6 +11,14 @@ async def list_roles(cursor: str | None = None):
 		"has_more": page.has_more,
 	})
 
+async def list_all_roles():
+	
+	all_roles = await Roles.findAll()
+
+	return APIResponse.ok("Roles fetched", [
+		{"id": r.id, "name": r.name} for r in all_roles
+	])
+
 async def update_role(role_id: int, data):
 
 	role = await Roles.find(role_id)

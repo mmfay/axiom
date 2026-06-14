@@ -17,6 +17,7 @@ export interface GLJournal {
 	reference: string;
 	memo: string | null;
 	status: "draft" | "posted" | "voided";
+	workflow_status: "pending" | "approved" | "rejected" | null;
 	total_debit?: number;
 	created_at: string;
 	posted_at: string | null;

@@ -179,6 +179,23 @@ class Users(Common):
 		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
+	async def findAll(cls, connection=None) -> list["Users"]:
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+					.columns("id", "email")
+					.order_by("email")
+					.scoped(company=False)
+				.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql)
+
+		return [cls.from_row(row, connection) for row in rows]
+
+	@classmethod
 	async def getUserPagination(cls, cursor: str | None = None, email: str | None = None, user_id: str | None = None, is_enabled: bool | None = None, connection=None) -> CursorPage:
 
 		temp = cls(connection=connection)
