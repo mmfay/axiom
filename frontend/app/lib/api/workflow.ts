@@ -1,4 +1,4 @@
-import { getJSON, patchJSON } from "./submissions";
+import { getJSON, patchJSON, postJSON } from "./submissions";
 import { APIResult } from "../types/data";
 import { WorkflowSummary, WorkflowDetail, SaveGraphRequest } from "../types/workflow";
 import { API_BASE_URL } from "../config";
@@ -13,6 +13,18 @@ export async function getWorkflow(documentType: string): Promise<APIResult<Workf
 
 export async function toggleWorkflow(documentType: string, isActive: boolean): Promise<APIResult<WorkflowSummary>> {
 	return patchJSON(`/workflows/${documentType}`, { is_active: isActive });
+}
+
+export async function submitWorkflow(documentType: string, recordId: number): Promise<APIResult<void>> {
+	return postJSON(`/workflows/${documentType}/${recordId}/submit`);
+}
+
+export async function approveWorkflow(documentType: string, recordId: number): Promise<APIResult<void>> {
+	return postJSON(`/workflows/${documentType}/${recordId}/approve`);
+}
+
+export async function rejectWorkflow(documentType: string, recordId: number): Promise<APIResult<void>> {
+	return postJSON(`/workflows/${documentType}/${recordId}/reject`);
 }
 
 export async function saveGraph(documentType: string, data: SaveGraphRequest): Promise<APIResult<void>> {
