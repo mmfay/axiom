@@ -34,14 +34,19 @@ class SQL:
 		# RETURNING clause (Postgres-specific)
 		self._returning = None
 
+		# ON CONFLICT clause (Postgres-specific)
+		self._conflict_target = None
+		self._conflict_action = None
+
 		# ORDER BY clause
 		self._order_by = None
 
 		# LIMIT clause
 		self._limit = None
 
-		# Tenant/company scoping flag
+		# Tenant/company scoping flags
 		self._scoped = False
+		self._scope_company = True
 
 	def select(self, table_name: str):
 		# Initialize SELECT query
@@ -120,8 +125,16 @@ class SQL:
 		self._limit = placeholder
 		return self
 
-	def scoped(self):
+	def scoped(self, company: bool = True):
 		self._scoped = True
+		self._scope_company = company
+		return self
+
+	def on_conflict(self, target: str, action: str = "DO NOTHING"):
+		# target: column(s) to conflict on, e.g. "tenant_id, document_type"
+		# action: "DO NOTHING" or "DO UPDATE SET col = EXCLUDED.col, ..."
+		self._conflict_target = target
+		self._conflict_action = action
 		return self
 
 	def returning(self, *columns):
@@ -143,10 +156,16 @@ class SQL:
 			t = "current_setting('app.tenant_id', true)::integer"
 			c = "current_setting('app.company_id', true)::integer"
 			if self._action == "INSERT":
-				fields = f"tenant_id, company_id, {fields}" if fields else "tenant_id, company_id"
-				values = f"{t}, {c}, {values}" if values else f"{t}, {c}"
+				if self._scope_company:
+					fields = f"tenant_id, company_id, {fields}" if fields else "tenant_id, company_id"
+					values = f"{t}, {c}, {values}" if values else f"{t}, {c}"
+				else:
+					fields = f"tenant_id, {fields}" if fields else "tenant_id"
+					values = f"{t}, {values}" if values else t
 			else:
-				where = [f"tenant_id = {t}", f"company_id = {c}"] + where
+				where = [f"tenant_id = {t}"] + where
+				if self._scope_company:
+					where = where + [f"company_id = {c}"]
 
 		# Build base query depending on action type
 		if self._action == "SELECT":
@@ -191,6 +210,10 @@ class SQL:
 		# Append LIMIT clause if specified
 		if self._limit:
 			query += f" LIMIT {self._limit}"
+
+		# Append ON CONFLICT clause if specified (INSERT only)
+		if self._conflict_target:
+			query += f" ON CONFLICT ({self._conflict_target}) {self._conflict_action}"
 
 		# Append RETURNING clause if specified
 		if self._returning:

@@ -4,6 +4,11 @@ export interface Role {
 	description: string | null;
 }
 
+export interface RoleOption {
+	id: number;
+	name: string;
+}
+
 export interface RoleCreate {
 	name: string;
 	description?: string;

@@ -21,6 +21,12 @@ const NumberingIcon = (
 	</svg>
 );
 
+const WorkflowIcon = (
+	<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 012-2h2a2 2 0 012 2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v2m0 0a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+	</svg>
+);
+
 export default function SysAdminPage() {
 
 	const { isSysAdmin } = useAuth();
@@ -43,6 +49,15 @@ export default function SysAdminPage() {
 						href="/sysadmin/numbering"
 						color="emerald"
 						icon={NumberingIcon}
+					/>
+					<ModuleButton
+						label="Workflows"
+						description="Design approval workflows for document types"
+						permission="System.Read"
+						variant="page"
+						href="/sysadmin/workflows"
+						color="sky"
+						icon={WorkflowIcon}
 					/>
 				</div>
 			</section>

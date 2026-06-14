@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import DimensionPicker from "@/app/components/GL/DimensionPicker";
 import ErrorBanner from "@/app/components/ErrorBanner";
+import WorkflowBanner from "@/app/components/WorkflowBanner";
 import { GLJournal, GLJournalLine, CreateGLJournalRequest } from "@/app/lib/types/gl_journals";
 import { GLAccount } from "@/app/lib/types/gl_accounts";
 import { DimensionWithValues } from "@/app/lib/types/gl_dimensions";
@@ -11,13 +12,18 @@ interface Props {
 	journal?: GLJournal;
 	accounts: GLAccount[];
 	dimensions: DimensionWithValues[];
+	workflowActive?: boolean;
 	saving: boolean;
 	posting: boolean;
 	voiding: boolean;
+	submitting?: boolean;
+	approving?: boolean;
+	rejecting?: boolean;
 	error?: string | null;
 	onSave: (payload: CreateGLJournalRequest) => void;
 	onPost: (payload: CreateGLJournalRequest) => void;
 	onVoid: () => void;
+	onStepSelect?: (step: { id: string; label: string }) => void;
 	onDismissError?: () => void;
 }
 
@@ -45,14 +51,31 @@ const inputClass =
 const numClass =
 	"text-sm px-2 py-1.5 w-28 bg-transparent border border-gray-200 dark:border-white/10 rounded-md text-right tabular-nums text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50";
 
-export default function JournalForm({ journal, accounts, dimensions, saving, posting, voiding, error, onSave, onPost, onVoid, onDismissError }: Props) {
+export default function JournalForm({ journal, accounts, dimensions, workflowActive, saving, posting, voiding, submitting, approving, rejecting, error, onSave, onPost, onVoid, onStepSelect, onDismissError }: Props) {
 
 	const isNew = !journal;
 	const isPosted = journal?.status === "posted";
 	const isVoided = journal?.status === "voided";
 	const locked = isPosted || isVoided;
+	const wfStatus = journal?.workflow_status ?? null;
+	const postBlocked = workflowActive && wfStatus !== "approved";
 
-	const [journalDate, setJournalDate] = useState(journal?.journal_date ?? today());
+	const [wfDismissed, setWfDismissed] = useState(false);
+	useEffect(() => { setWfDismissed(false); }, [wfStatus]);
+
+	const workflowSteps = (() => {
+
+		if (!workflowActive || locked) 
+			return [];
+		if (wfStatus === null || wfStatus === "rejected")
+			return [{ id: "submit", label: wfStatus === "rejected" ? "Re-submit for Approval" : "Submit for Approval" }];
+		if (wfStatus === "pending")
+			return [{ id: "approve", label: "Approve" }, { id: "reject", label: "Reject" }];
+		return [];
+		
+	})();
+
+const [journalDate, setJournalDate] = useState(journal?.journal_date ?? today());
 	const [memo, setMemo] = useState(journal?.memo ?? "");
 	const [lines, setLines] = useState<GLJournalLine[]>(
 		journal?.lines?.length ? journal.lines : [blankLine(), blankLine()]
@@ -97,6 +120,14 @@ export default function JournalForm({ journal, accounts, dimensions, saving, pos
 		{error && onDismissError && (
 			<ErrorBanner message={error} onDismiss={onDismissError} />
 		)}
+		{workflowSteps.length > 0 && !wfDismissed && (
+			<WorkflowBanner
+				recordId={journal?.id?.toString()}
+				steps={workflowSteps}
+				onStepSelect={onStepSelect}
+				onDismiss={() => setWfDismissed(true)}
+			/>
+		)}
 		<div className="p-8 flex flex-col gap-6 max-w-6xl">
 
 			{/* Header */}
@@ -109,15 +140,28 @@ export default function JournalForm({ journal, accounts, dimensions, saving, pos
 				</div>
 
 				{journal && (
-					<span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-						journal.status === "posted"
-							? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-							: journal.status === "voided"
-							? "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-slate-400"
-							: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-					}`}>
-						{journal.status}
-					</span>
+					<div className="flex items-center gap-2">
+						<span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+							journal.status === "posted"
+								? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+								: journal.status === "voided"
+								? "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-slate-400"
+								: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+						}`}>
+							{journal.status}
+						</span>
+						{wfStatus && (
+							<span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+								wfStatus === "approved"
+									? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+									: wfStatus === "rejected"
+									? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400"
+									: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"
+							}`}>
+								{wfStatus}
+							</span>
+						)}
+					</div>
 				)}
 			</div>
 
@@ -308,7 +352,8 @@ export default function JournalForm({ journal, accounts, dimensions, saving, pos
 							</button>
 							<button
 								onClick={() => onPost(buildPayload())}
-								disabled={posting || !balanced}
+								disabled={posting || !balanced || postBlocked}
+								title={postBlocked ? "Approval required before posting" : undefined}
 								className="px-4 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors disabled:opacity-50"
 							>
 								{posting ? "Posting…" : "Post"}

@@ -34,4 +34,3 @@ export async function postJournal(id: number): Promise<APIResult<GLJournal>> {
 export async function voidJournal(id: number): Promise<APIResult<GLJournal>> {
 	return postJSON(`/gl/journals/${id}/void`);
 }
-

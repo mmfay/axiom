@@ -29,6 +29,10 @@ async def add_user_role(rec_id: int, role_id: int, _=Depends(require_permission(
 async def remove_user_role(rec_id: int, role_id: int, _=Depends(require_permission())):
 	return await users.remove_user_role(rec_id, role_id)
 
+@router.get("/all")
+async def list_all_users(_=Depends(require_permission())):
+	return await users.list_all_users()
+
 @router.get("/listPage")
 async def get_users_list_page(
 	cursor: str | None = None,

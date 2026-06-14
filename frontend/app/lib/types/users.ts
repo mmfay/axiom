@@ -1,6 +1,11 @@
 // types/user.ts
 import { UserEmail } from "./auth"
 
+export interface UserOption {
+	id: number;
+	email: string;
+}
+
 export interface Users extends UserEmail {
 	id: number;
 	user_id: string;

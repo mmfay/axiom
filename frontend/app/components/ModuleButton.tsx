@@ -10,6 +10,7 @@ const colorMap = {
 	amber: "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400",
 	rose: "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400",
 	cyan: "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
+	sky: "bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400",
 } as const;
 
 type Color = keyof typeof colorMap;

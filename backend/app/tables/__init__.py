@@ -17,6 +17,9 @@ from .GLJournalLines import GLJournalLines
 from .NumberingSchemes import NumberingSchemes
 from .SLTrans import SLTrans
 from .GLTrans import GLTrans
+from .WorkflowDefinitions import WorkflowDefinitions
+from .WorkflowNodes import WorkflowNodes
+from .WorkflowEdges import WorkflowEdges
 
 __all__ = [
 	"Users",
@@ -37,5 +40,8 @@ __all__ = [
 	"GLJournalLines",
 	"NumberingSchemes",
 	"SLTrans",
-	"GLTrans"
+	"GLTrans",
+	"WorkflowDefinitions",
+	"WorkflowNodes",
+	"WorkflowEdges",
 ]

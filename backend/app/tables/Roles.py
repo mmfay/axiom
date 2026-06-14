@@ -152,6 +152,23 @@ class Roles(Common):
 		return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
 
 	@classmethod
+	async def findAll(cls, connection=None) -> list["Roles"]:
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+					.columns("id", "name")
+					.order_by("name")
+					.scoped(company=False)
+				.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql)
+
+		return [cls.from_row(row, connection) for row in rows]
+
+	@classmethod
 	async def findByName(cls, name: str, connection=None) -> "Roles | None":
 		temp = cls(connection=connection)
 

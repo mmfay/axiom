@@ -217,8 +217,8 @@ VALUES (1, 1, '2026-04-22',
 -- ── GL Journals ───────────────────────────────────────────────────────────────
 
 -- 1. May salary accrual (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-01', 'JE-2026-0001', 'May salary accrual', 'posted', '2026-05-01 09:00:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-01', 'JE-2026-0001', 'May salary accrual', 'posted', NULL, '2026-05-01 09:00:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6000'), 'Engineering salaries',  8000.00,     0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='ENG'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),
@@ -226,72 +226,72 @@ VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='2100'), 'Salaries payable',           0.00, 12500.00, NULL, NULL);
 
 -- 2. May rent payment (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-01', 'JE-2026-0002', 'May office rent — WeWork', 'posted', '2026-05-01 09:15:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-01', 'JE-2026-0002', 'May office rent — WeWork', 'posted', NULL, '2026-05-01 09:15:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6100'), 'May rent', 3500.00,    0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1000'), 'May rent',    0.00, 3500.00, NULL, NULL);
 							
 -- 3. Annual insurance prepayment (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-02', 'JE-2026-0003', 'Annual business insurance premium', 'posted', '2026-05-02 10:00:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-02', 'JE-2026-0003', 'Annual business insurance premium', 'posted', NULL, '2026-05-02 10:00:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1500'), 'Prepaid insurance 12 months', 6000.00,    0.00, NULL, NULL),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1000'), 'Insurance premium payment',     0.00, 6000.00, NULL, NULL);
 
 -- 4. Capital injection (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-10', 'JE-2026-0004', 'Founder capital contribution', 'posted', '2026-05-10 08:30:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-10', 'JE-2026-0004', 'Founder capital contribution', 'posted', NULL, '2026-05-10 08:30:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1000'), 'Capital wire received', 50000.00,     0.00, NULL, NULL),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='3000'), 'Common stock issued',      0.00, 50000.00, NULL, NULL);
 
 -- 5. Deferred revenue recognition (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-15', 'JE-2026-0005', 'Recognize deferred revenue — TechCorp retainer', 'posted', '2026-05-15 11:00:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-15', 'JE-2026-0005', 'Recognize deferred revenue — TechCorp retainer', 'posted', NULL, '2026-05-15 11:00:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='2500'), 'TechCorp retainer earned', 2500.00,    0.00, NULL, NULL),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='4100'), 'TechCorp retainer earned',    0.00, 2500.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='SLS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='RMT'));
 
 -- 6. Legal fees accrual (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-20', 'JE-2026-0006', 'Legal fees accrual — Lawson & Co', 'posted', '2026-05-20 14:00:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-20', 'JE-2026-0006', 'Legal fees accrual — Lawson & Co', 'posted', NULL, '2026-05-20 14:00:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6500'), 'Legal retainer May', 4000.00,    0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='2100'), 'Lawson & Co payable',  0.00, 4000.00, NULL, NULL);
 
 -- 7. Monthly depreciation (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-31', 'JE-2026-0007', 'May depreciation — fixed assets', 'posted', '2026-05-31 17:00:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-31', 'JE-2026-0007', 'May depreciation — fixed assets', 'posted', NULL, '2026-05-31 17:00:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6300'), 'May depreciation', 1200.00,    0.00, NULL, NULL),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1810'), 'May depreciation',    0.00, 1200.00, NULL, NULL);
 
 -- 8. Insurance amortization (posted)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-31', 'JE-2026-0008', 'May insurance amortization', 'posted', '2026-05-31 17:05:00+00');
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-31', 'JE-2026-0008', 'May insurance amortization', 'posted', NULL, '2026-05-31 17:05:00+00');
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6400'), 'Insurance expense May', 500.00,   0.00, NULL, NULL),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='1500'), 'Prepaid insurance',       0.00, 500.00, NULL, NULL);
 
 -- 9. Utilities accrual (draft)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-25', 'JE-2026-0009', 'May utilities accrual', 'draft', NULL);
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-25', 'JE-2026-0009', 'May utilities accrual', 'draft', NULL, NULL);
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6200'), 'Estimated utilities May', 850.00,   0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='2100'), 'Utilities payable',         0.00, 850.00, NULL, NULL);
 
 -- 10. Petty cash replenishment (draft)
-INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, posted_at)
-VALUES (1, 1, '2026-05-25', 'JE-2026-0010', 'Petty cash replenishment', 'draft', NULL);
+INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
+VALUES (1, 1, '2026-05-25', 'JE-2026-0010', 'Petty cash replenishment', 'draft', NULL, NULL);
 INSERT INTO gl_journal_lines (journal_id, tenant_id, company_id, account_id, description, debit, credit, dim1_value_id, dim2_value_id)
 VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6900'), 'Office supplies misc', 185.00,   0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),

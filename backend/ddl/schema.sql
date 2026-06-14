@@ -1,4 +1,7 @@
 DROP VIEW IF EXISTS vw_trial_balance;
+DROP TABLE IF EXISTS workflow_edges;
+DROP TABLE IF EXISTS workflow_nodes;
+DROP TABLE IF EXISTS workflow_definitions;
 DROP TABLE IF EXISTS numbering_schemes;
 DROP TABLE IF EXISTS gl_journal_lines;
 DROP TABLE IF EXISTS gl_journals;
@@ -219,6 +222,7 @@ CREATE TABLE IF NOT EXISTS gl_journals (
 	reference TEXT NOT NULL,
 	memo TEXT,
 	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted', 'voided')),
+	workflow_status TEXT NULL CHECK (workflow_status IN ('pending', 'approved', 'rejected')),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	posted_at TIMESTAMPTZ
 );
@@ -237,6 +241,39 @@ CREATE TABLE IF NOT EXISTS gl_journal_lines (
 	dim3_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
 	dim4_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT,
 	dim5_value_id INTEGER REFERENCES gl_dimension_values(id) ON DELETE RESTRICT
+);
+
+-- ── Workflows ────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS workflow_definitions (
+	id SERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	document_type TEXT NOT NULL CHECK (document_type IN ('gl_journal')),
+	is_active BOOLEAN NOT NULL DEFAULT FALSE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	UNIQUE (tenant_id, document_type)
+);
+
+CREATE TABLE IF NOT EXISTS workflow_nodes (
+	id TEXT NOT NULL,
+	workflow_id INTEGER NOT NULL REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	node_type TEXT NOT NULL CHECK (node_type IN ('start', 'end', 'approval')),
+	label TEXT NOT NULL,
+	approver_type TEXT CHECK (approver_type IN ('role', 'user')),
+	approver_id INTEGER,
+	position_x NUMERIC NOT NULL DEFAULT 0,
+	position_y NUMERIC NOT NULL DEFAULT 0,
+	PRIMARY KEY (id, workflow_id)
+);
+
+CREATE TABLE IF NOT EXISTS workflow_edges (
+	id TEXT NOT NULL,
+	workflow_id INTEGER NOT NULL REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+	tenant_id INTEGER NOT NULL,
+	source_node_id TEXT NOT NULL,
+	target_node_id TEXT NOT NULL,
+	PRIMARY KEY (id, workflow_id)
 );
 
 -- ── Views ─────────────────────────────────────────────────────────────────────
