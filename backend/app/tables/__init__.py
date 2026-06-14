@@ -20,6 +20,7 @@ from .GLTrans import GLTrans
 from .WorkflowDefinitions import WorkflowDefinitions
 from .WorkflowNodes import WorkflowNodes
 from .WorkflowEdges import WorkflowEdges
+from .WorkflowApprovals import WorkflowApprovals
 
 __all__ = [
 	"Users",
@@ -44,4 +45,5 @@ __all__ = [
 	"WorkflowDefinitions",
 	"WorkflowNodes",
 	"WorkflowEdges",
+	"WorkflowApprovals",
 ]
