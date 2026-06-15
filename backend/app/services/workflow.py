@@ -1,5 +1,5 @@
-from app.tables import WorkflowDefinitions, WorkflowNodes, WorkflowEdges
-from app.classes.workflowhandler import WorkflowHandler
+from app.tables import WorkflowDefinitions, WorkflowNodes, WorkflowEdges, WorkflowApprovals, Users
+from app.classes.workflowhandler import WorkflowHandler, _ordered_approval_nodes
 from app.classes.apiresponse import APIResponse
 from app.services.db import db
 
@@ -119,6 +119,44 @@ async def save_graph(document_type: str, data):
 			await edge.insert()
 
 	return APIResponse.ok("Workflow saved")
+
+
+async def get_workflow_history(document_type: str, record_id: int):
+
+	if document_type not in DOCUMENT_TYPES:
+		APIResponse.not_found("Workflow type not found")
+
+	defn = await WorkflowDefinitions.find_by_type(document_type)
+	if not defn:
+		return APIResponse.ok("No workflow", {"steps": []})
+
+	nodes = await WorkflowNodes.find_by_workflow(defn.id)
+	edges = await WorkflowEdges.find_by_workflow(defn.id)
+	ordered = _ordered_approval_nodes(nodes, edges)
+
+	approvals = await WorkflowApprovals.find_for_record(document_type, record_id)
+	approval_map = {a.workflow_node_id: a for a in approvals}
+
+	steps = []
+	for node in ordered:
+		approval = approval_map.get(node.id)
+		if approval:
+			user = await Users.find(approval.approved_by)
+			steps.append({
+				"label": node.label,
+				"status": approval.status,
+				"actioned_by": user.email if user else None,
+				"actioned_at": approval.created_at.isoformat() if approval.created_at else None,
+			})
+		else:
+			steps.append({
+				"label": node.label,
+				"status": "pending",
+				"actioned_by": None,
+				"actioned_at": None,
+			})
+
+	return APIResponse.ok("Workflow history", {"steps": steps})
 
 
 async def submit_workflow(document_type: str, record_id: int):

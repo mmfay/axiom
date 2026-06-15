@@ -14,10 +14,11 @@ class WorkflowApprovals(Common):
 	record_id: Optional[int] = None
 	approved_by: Optional[int] = None
 	status: Optional[str] = None
+	created_at: Optional[str] = None
 
 	table_name = "workflow_approvals"
 
-	def __init__(self, id=None, tenant_id=None, workflow_node_id=None, document_type=None, record_id=None, approved_by=None, status=None, connection=None):
+	def __init__(self, id=None, tenant_id=None, workflow_node_id=None, document_type=None, record_id=None, approved_by=None, status=None, created_at=None, connection=None):
 		super().__init__(connection)
 		self.id = id
 		self.tenant_id = tenant_id
@@ -26,6 +27,7 @@ class WorkflowApprovals(Common):
 		self.record_id = record_id
 		self.approved_by = approved_by
 		self.status = status
+		self.created_at = created_at
 
 	@classmethod
 	async def create(cls, workflow_node_id: str, document_type: str, record_id: int, approved_by: int, status: str, connection=None) -> "WorkflowApprovals":
@@ -68,6 +70,24 @@ class WorkflowApprovals(Common):
 		rows = await temp.fetch_all(sql, document_type, record_id)
 
 		return {cls.from_row(r).workflow_node_id for r in rows}
+
+	@classmethod
+	async def find_for_record(cls, document_type: str, record_id: int, connection=None) -> list["WorkflowApprovals"]:
+
+		temp = cls(connection=connection)
+
+		sql = (
+			SQL()
+				.select(cls.table_name)
+					.scoped(company=False)
+					.where("document_type = $1")
+					.where("record_id = $2")
+				.getQuery()
+		)
+
+		rows = await temp.fetch_all(sql, document_type, record_id)
+		
+		return [cls.from_row(r, connection) for r in rows]
 
 	@classmethod
 	async def delete_for_record(cls, document_type: str, record_id: int, connection=None) -> None:
