@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getWorkflow, submitWorkflow, approveWorkflow, rejectWorkflow } from "../api/workflow";
+import { getWorkflow, submitWorkflow, approveWorkflow, rejectWorkflow, getWorkflowHistory } from "../api/workflow";
 import { ApiResponse } from "../api/response";
+import { WorkflowHistoryStep } from "../types/workflow";
 
 export type WorkflowActions = {
 	workflowActive: boolean;
@@ -15,6 +16,11 @@ export type WorkflowActions = {
 	approve: () => Promise<void>;
 	reject: () => Promise<void>;
 	onStepSelect: (step: { id: string; label: string }) => void;
+	historyOpen: boolean;
+	historyLoading: boolean;
+	history: WorkflowHistoryStep[] | null;
+	openHistory: () => void;
+	closeHistory: () => void;
 };
 
 export function useWorkflowActions(
@@ -28,6 +34,9 @@ export function useWorkflowActions(
 	const [approving, setApproving] = useState(false);
 	const [rejecting, setRejecting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [historyOpen, setHistoryOpen] = useState(false);
+	const [historyLoading, setHistoryLoading] = useState(false);
+	const [history, setHistory] = useState<WorkflowHistoryStep[] | null>(null);
 
 	const onSuccessRef = useRef(onSuccess);
 	useEffect(() => { onSuccessRef.current = onSuccess; }, [onSuccess]);
@@ -105,6 +114,24 @@ export function useWorkflowActions(
 		if (step.id === "reject") reject();
 	}, [submit, approve, reject]);
 
-	return { workflowActive, submitting, approving, rejecting, error, clearError, submit, approve, reject, onStepSelect };
+	const openHistory = useCallback(async () => {
+
+		if (!recordId) return;
+
+		setHistoryOpen(true);
+		setHistoryLoading(true);
+
+		try {
+			const res = ApiResponse.handle(await getWorkflowHistory(documentType, recordId));
+			if (res.ok && res.data) setHistory(res.data.steps);
+		} finally {
+			setHistoryLoading(false);
+		}
+		
+	}, [documentType, recordId]);
+
+	const closeHistory = useCallback(() => setHistoryOpen(false), []);
+
+	return { workflowActive, submitting, approving, rejecting, error, clearError, submit, approve, reject, onStepSelect, historyOpen, historyLoading, history, openHistory, closeHistory };
 	
 }
