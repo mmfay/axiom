@@ -29,7 +29,9 @@ class WorkflowApprovals(Common):
 
 	@classmethod
 	async def create(cls, workflow_node_id: str, document_type: str, record_id: int, approved_by: int, status: str, connection=None) -> "WorkflowApprovals":
+		
 		temp = cls(connection=connection)
+
 		sql = (
 			SQL()
 				.insert(cls.table_name)
@@ -39,14 +41,19 @@ class WorkflowApprovals(Common):
 					.returning()
 				.getQuery()
 		)
+
 		row = await temp.fetch_returning(sql, workflow_node_id, document_type, record_id, approved_by, status)
+
 		if row is None:
 			raise ValueError("Insert failed")
+		
 		return cls.from_row(row, connection)
 
 	@classmethod
 	async def get_approved_node_ids(cls, document_type: str, record_id: int, connection=None) -> set:
+
 		temp = cls(connection=connection)
+
 		sql = (
 			SQL()
 				.select(cls.table_name)
@@ -57,12 +64,16 @@ class WorkflowApprovals(Common):
 					.where("status = 'approved'")
 				.getQuery()
 		)
+
 		rows = await temp.fetch_all(sql, document_type, record_id)
+
 		return {cls.from_row(r).workflow_node_id for r in rows}
 
 	@classmethod
 	async def delete_for_record(cls, document_type: str, record_id: int, connection=None) -> None:
+
 		temp = cls(connection=connection)
+
 		sql = (
 			SQL()
 				.delete(cls.table_name)
@@ -71,4 +82,5 @@ class WorkflowApprovals(Common):
 					.where("record_id = $2")
 				.getQuery()
 		)
+
 		await temp.execute(sql, document_type, record_id)
