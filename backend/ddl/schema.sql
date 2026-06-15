@@ -1,4 +1,5 @@
 DROP VIEW IF EXISTS vw_trial_balance;
+DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS workflow_approvals;
 DROP TABLE IF EXISTS workflow_edges;
 DROP TABLE IF EXISTS workflow_nodes;
@@ -275,6 +276,18 @@ CREATE TABLE IF NOT EXISTS workflow_edges (
 	source_node_id TEXT NOT NULL,
 	target_node_id TEXT NOT NULL,
 	PRIMARY KEY (id, workflow_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+	id BIGSERIAL PRIMARY KEY,
+	tenant_id INTEGER NOT NULL,
+	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	type TEXT NOT NULL,
+	message TEXT NOT NULL,
+	document_type TEXT,
+	record_id BIGINT,
+	is_read BOOLEAN NOT NULL DEFAULT FALSE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS workflow_approvals (
