@@ -29,3 +29,14 @@ export interface SaveGraphRequest {
 	nodes: WorkflowNode[];
 	edges: WorkflowEdge[];
 }
+
+export interface WorkflowHistoryStep {
+	label: string;
+	status: "approved" | "rejected" | "pending";
+	actioned_by: string | null;
+	actioned_at: string | null;
+}
+
+export interface WorkflowHistory {
+	steps: WorkflowHistoryStep[];
+}

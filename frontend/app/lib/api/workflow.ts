@@ -1,6 +1,6 @@
 import { getJSON, patchJSON, postJSON } from "./submissions";
 import { APIResult } from "../types/data";
-import { WorkflowSummary, WorkflowDetail, SaveGraphRequest } from "../types/workflow";
+import { WorkflowSummary, WorkflowDetail, WorkflowHistory, SaveGraphRequest } from "../types/workflow";
 import { API_BASE_URL } from "../config";
 
 export async function listWorkflows(): Promise<APIResult<WorkflowSummary[]>> {
@@ -25,6 +25,10 @@ export async function approveWorkflow(documentType: string, recordId: number): P
 
 export async function rejectWorkflow(documentType: string, recordId: number): Promise<APIResult<void>> {
 	return postJSON(`/workflows/${documentType}/${recordId}/reject`);
+}
+
+export async function getWorkflowHistory(documentType: string, recordId: number): Promise<APIResult<WorkflowHistory>> {
+	return getJSON(`/workflows/${documentType}/${recordId}/history`);
 }
 
 export async function saveGraph(documentType: string, data: SaveGraphRequest): Promise<APIResult<void>> {

@@ -5,6 +5,7 @@ import { use } from "react";
 import { useGLJournalDetail } from "@/app/lib/hooks/useGLJournalDetail";
 import { useWorkflowActions } from "@/app/lib/hooks/useWorkflowActions";
 import JournalForm from "../_components/JournalForm";
+import WorkflowHistoryModal from "@/app/components/WorkflowHistoryModal";
 
 export default function JournalDetailPage({ params }: { params: Promise<{ id: string }> }) {
 
@@ -35,23 +36,33 @@ export default function JournalDetailPage({ params }: { params: Promise<{ id: st
 	const clearError = () => { wf.clearError(); detail.clearError(); };
 
 	return (
-		<JournalForm
-			journal={detail.journal}
-			accounts={detail.accounts}
-			dimensions={detail.dimensions}
-			workflowActive={wf.workflowActive}
-			saving={detail.saving}
-			posting={detail.posting}
-			voiding={detail.voiding}
-			submitting={wf.submitting}
-			approving={wf.approving}
-			rejecting={wf.rejecting}
-			error={error}
-			onSave={detail.save}
-			onPost={detail.post}
-			onVoid={detail.void}
-			onStepSelect={wf.onStepSelect}
-			onDismissError={clearError}
-		/>
+		<>
+			<JournalForm
+				journal={detail.journal}
+				accounts={detail.accounts}
+				dimensions={detail.dimensions}
+				workflowActive={wf.workflowActive}
+				saving={detail.saving}
+				posting={detail.posting}
+				voiding={detail.voiding}
+				submitting={wf.submitting}
+				approving={wf.approving}
+				rejecting={wf.rejecting}
+				error={error}
+				onSave={detail.save}
+				onPost={detail.post}
+				onVoid={detail.void}
+				onStepSelect={wf.onStepSelect}
+				onHistory={wf.openHistory}
+				onDismissError={clearError}
+			/>
+			{wf.historyOpen && (
+				<WorkflowHistoryModal
+					steps={wf.history ?? []}
+					loading={wf.historyLoading}
+					onClose={wf.closeHistory}
+				/>
+			)}
+		</>
 	);
 }

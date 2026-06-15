@@ -36,13 +36,14 @@ class UserRoleAssignments(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, user_id, role_id")
-					.values("$1, $2, $3")
+					.fields("user_id, role_id")
+					.values("$1, $2")
+					.scoped(company=False)
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), self.user_id, self.role_id)
+		row = await self.fetch_returning(sql, self.user_id, self.role_id)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -56,13 +57,13 @@ class UserRoleAssignments(Common):
 		sql = (
 			SQL()
 				.delete(self.table_name)
-					.where("tenant_id = $1")
-					.where("user_id = $2")
-					.where("role_id = $3")
+					.where("user_id = $1")
+					.where("role_id = $2")
+					.scoped(company=False)
 				.getQuery()
 		)
 
-		await self.execute(sql, get_tenant(), self.user_id, self.role_id)
+		await self.execute(sql, self.user_id, self.role_id)
 
 	@classmethod
 	async def findByUser(cls, user_id: int, connection=None) -> list["UserRoleAssignments"]:
@@ -71,12 +72,12 @@ class UserRoleAssignments(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("user_id = $2")
-			.getQuery()
+					.where("user_id = $1")
+					.scoped(company=False)
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), user_id)
+		rows = await temp.fetch_all(sql, user_id)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -87,11 +88,11 @@ class UserRoleAssignments(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("role_id = $2")
-			.getQuery()
+					.where("role_id = $1")
+					.scoped(company=False)
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), role_id)
+		rows = await temp.fetch_all(sql, role_id)
 
 		return [cls.from_row(row, connection) for row in rows]
