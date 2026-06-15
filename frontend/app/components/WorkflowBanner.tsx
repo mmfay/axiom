@@ -11,10 +11,11 @@ interface Props {
 	recordId?: string;
 	steps?: WorkflowStep[];
 	onStepSelect?: (step: WorkflowStep) => void;
+	onHistory?: () => void;
 	onDismiss: () => void;
 }
 
-export default function WorkflowBanner({ recordId, steps = [], onStepSelect, onDismiss }: Props) {
+export default function WorkflowBanner({ recordId, steps = [], onStepSelect, onHistory, onDismiss }: Props) {
 
 	const [visible, setVisible] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -74,6 +75,16 @@ export default function WorkflowBanner({ recordId, steps = [], onStepSelect, onD
 						</div>
 					)}
 				</div>
+
+				{onHistory && (
+					<button
+						onClick={onHistory}
+						title="View history"
+						className="shrink-0 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 transition-colors text-xs underline underline-offset-2"
+					>
+						History
+					</button>
+				)}
 
 				<button
 					onClick={onDismiss}

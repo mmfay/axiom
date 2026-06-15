@@ -289,6 +289,27 @@ VALUES
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='6200'), 'Estimated utilities May', 850.00,   0.00, (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='OPS'), (SELECT id FROM gl_dimension_values WHERE tenant_id=1 AND company_id=1 AND code='HQ')),
     (currval('gl_journals_id_seq'), 1, 1, (SELECT id FROM gl_accounts WHERE tenant_id=1 AND company_id=1 AND account_number='2100'), 'Utilities payable',         0.00, 850.00, NULL, NULL);
 
+-- ── Workflow: GL Journal ──────────────────────────────────────────────────────
+
+INSERT INTO workflow_definitions (tenant_id, document_type, is_active)
+VALUES (1, 'gl_journal', TRUE)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO workflow_nodes (id, workflow_id, tenant_id, node_type, label, approver_type, approver_id, position_x, position_y)
+VALUES
+    ('wf-gl-start',      (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'start',    'Start',              NULL,   NULL,                                                                           100, 200),
+    ('wf-gl-approval-1', (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'approval', 'Admin Approval',     'user', (SELECT id FROM users WHERE email='admin@softwarerror.com'),          300, 200),
+    ('wf-gl-approval-2', (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'approval', 'Controller Approval','user', (SELECT id FROM users WHERE email='matthew.fay@softwarerror.com'),    500, 200),
+    ('wf-gl-end',        (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'end',      'End',                NULL,   NULL,                                                                           700, 200)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO workflow_edges (id, workflow_id, tenant_id, source_node_id, target_node_id)
+VALUES
+    ('wf-gl-edge-1', (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'wf-gl-start',      'wf-gl-approval-1'),
+    ('wf-gl-edge-2', (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'wf-gl-approval-1', 'wf-gl-approval-2'),
+    ('wf-gl-edge-3', (SELECT id FROM workflow_definitions WHERE tenant_id=1 AND document_type='gl_journal'), 1, 'wf-gl-approval-2', 'wf-gl-end')
+ON CONFLICT DO NOTHING;
+
 -- 10. Petty cash replenishment (draft)
 INSERT INTO gl_journals (tenant_id, company_id, journal_date, reference, memo, status, workflow_status, posted_at)
 VALUES (1, 1, '2026-05-25', 'JE-2026-0010', 'Petty cash replenishment', 'draft', NULL, NULL);

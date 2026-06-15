@@ -24,6 +24,7 @@ interface Props {
 	onPost: (payload: CreateGLJournalRequest) => void;
 	onVoid: () => void;
 	onStepSelect?: (step: { id: string; label: string }) => void;
+	onHistory?: () => void;
 	onDismissError?: () => void;
 }
 
@@ -51,7 +52,7 @@ const inputClass =
 const numClass =
 	"text-sm px-2 py-1.5 w-28 bg-transparent border border-gray-200 dark:border-white/10 rounded-md text-right tabular-nums text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50";
 
-export default function JournalForm({ journal, accounts, dimensions, workflowActive, saving, posting, voiding, submitting, approving, rejecting, error, onSave, onPost, onVoid, onStepSelect, onDismissError }: Props) {
+export default function JournalForm({ journal, accounts, dimensions, workflowActive, saving, posting, voiding, submitting, approving, rejecting, error, onSave, onPost, onVoid, onStepSelect, onHistory, onDismissError }: Props) {
 
 	const isNew = !journal;
 	const isPosted = journal?.status === "posted";
@@ -125,6 +126,7 @@ const [journalDate, setJournalDate] = useState(journal?.journal_date ?? today())
 				recordId={journal?.id?.toString()}
 				steps={workflowSteps}
 				onStepSelect={onStepSelect}
+				onHistory={onHistory}
 				onDismiss={() => setWfDismissed(true)}
 			/>
 		)}
