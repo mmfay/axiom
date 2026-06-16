@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant, get_company
 
 
 @dataclass
@@ -58,16 +57,15 @@ class NumberingSchemes(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, document_type, prefix, separator, padding, include_year, include_month, next_value")
-					.values("$1, $2, $3, $4, $5, $6, $7, $8, $9")
+					.fields("document_type, prefix, separator, padding, include_year, include_month, next_value")
+					.values("$1, $2, $3, $4, $5, $6, $7")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_one(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.document_type,
 			self.prefix or "",
 			self.separator if self.separator is not None else "-",
@@ -96,18 +94,15 @@ class NumberingSchemes(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("prefix = $4, separator = $5, padding = $6, include_year = $7, include_month = $8, next_value = $9, is_active = $10")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("prefix = $2, separator = $3, padding = $4, include_year = $5, include_month = $6, next_value = $7, is_active = $8")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_one(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.id,
 			self.prefix,
 			self.separator,
@@ -130,13 +125,12 @@ class NumberingSchemes(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.where("id = $1")
+					.scoped()
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -150,13 +144,12 @@ class NumberingSchemes(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
+					.scoped()
 					.order_by("document_type")
 				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), get_company())
+		rows = await temp.fetch_all(sql)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -167,14 +160,13 @@ class NumberingSchemes(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("document_type = $3")
+					.where("document_type = $1")
 					.where("is_active = TRUE")
+					.scoped()
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), document_type)
+		row = await temp.fetch_one(sql, document_type)
 
 		if row is None:
 			return None

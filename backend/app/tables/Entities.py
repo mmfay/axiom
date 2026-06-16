@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant
 
 
 @dataclass
@@ -39,13 +38,14 @@ class Entities(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, name")
-					.values("$1, $2")
+					.fields("name")
+					.values("$1")
+					.scoped(company=False)
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_returning(sql, get_tenant(), self.name)
+		row = await self.fetch_returning(sql, self.name)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -65,13 +65,14 @@ class Entities(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("tenant_id = $1, name = $2, is_active = $3")
-					.where("id = $4")
+					.set("name = $1, is_active = $2")
+					.where("id = $3")
+					.scoped(company=False)
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_returning(sql, self.tenant_id, self.name, self.is_active, self.id)
+		row = await self.fetch_returning(sql, self.name, self.is_active, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -85,12 +86,12 @@ class Entities(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("is_active = TRUE")
-			.getQuery()
+					.where("is_active = TRUE")
+					.scoped(company=False)
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant())
+		rows = await temp.fetch_all(sql)
 
 		return [cls.from_row(row, connection) for row in rows]
 

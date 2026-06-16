@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant
 
 
 @dataclass
@@ -32,12 +31,13 @@ class RolePermissions(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("role_id, permission_id, tenant_id")
-					.values("$1, $2, $3")
+					.fields("role_id, permission_id")
+					.values("$1, $2")
+					.scoped(company=False)
 				.getQuery()
 		)
 
-		await self.execute(sql, self.role_id, self.permission_id, get_tenant())
+		await self.execute(sql, self.role_id, self.permission_id)
 
 		return self
 
@@ -47,11 +47,11 @@ class RolePermissions(Common):
 				.delete(self.table_name)
 					.where("role_id = $1")
 					.where("permission_id = $2")
-					.where("tenant_id = $3")
+					.scoped(company=False)
 				.getQuery()
 		)
 
-		await self.execute(sql, self.role_id, self.permission_id, get_tenant())
+		await self.execute(sql, self.role_id, self.permission_id)
 
 	@classmethod
 	async def findByRole(cls, role_id: int, connection=None) -> list["RolePermissions"]:
@@ -60,11 +60,12 @@ class RolePermissions(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("role_id = $1 AND tenant_id = $2")
-			.getQuery()
+					.where("role_id = $1")
+					.scoped(company=False)
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, role_id, get_tenant())
+		rows = await temp.fetch_all(sql, role_id)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -75,10 +76,11 @@ class RolePermissions(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("permission_id = $1 AND tenant_id = $2")
+				.where("permission_id = $1")
+				.scoped(company=False)
 			.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, permission_id, get_tenant())
+		rows = await temp.fetch_all(sql, permission_id)
 
 		return [cls.from_row(row, connection) for row in rows]

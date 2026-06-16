@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 from app.services.sql import SQL
 from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
-from app.services.ctx import get_tenant, get_company
-from app.classes.appexception import AppException
 from app.classes.apiresponse import APIResponse
 
 if TYPE_CHECKING:
@@ -135,24 +133,6 @@ class GLAccounts(Common):
 			return None
 
 		return cls.from_row(row, connection)
-
-	@classmethod
-	async def findByCompany(cls, company_id: int, connection=None) -> list["GLAccounts"]:
-		temp = cls(connection=connection)
-
-		sql = (
-			SQL()
-				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("is_active = TRUE")
-				.order_by("account_number")
-			.getQuery()
-		)
-
-		rows = await temp.fetch_all(sql, get_tenant(), company_id)
-
-		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
 	async def getAccountsPagination(

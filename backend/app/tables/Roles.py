@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
 from app.services.cursorpage import CursorPage, decode_cursor, encode_cursor
-from app.services.ctx import get_tenant
 from app.classes.appexception import AppException
 
 
@@ -41,13 +40,14 @@ class Roles(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, name, description")
-					.values("$1, $2, $3")
+					.fields("name, description")
+					.values("$1, $2")
+					.scoped(company=False)
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_returning(sql, get_tenant(), self.name, self.description)
+		row = await self.fetch_returning(sql, self.name, self.description)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
@@ -68,12 +68,12 @@ class Roles(Common):
 				.update(self.table_name)
 					.set("name = $1, description = $2")
 					.where("id = $3")
-					.where("tenant_id = $4")
+					.scoped(company=False)
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_returning(sql, self.name, self.description, self.id, self.tenant_id)
+		row = await self.fetch_returning(sql, self.name, self.description, self.id)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -88,11 +88,11 @@ class Roles(Common):
 			SQL()
 				.select(cls.table_name)
 				.where("id = $1")
-				.where("tenant_id = $2")
+				.scoped(company=False)
 			.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, id, get_tenant())
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -106,11 +106,11 @@ class Roles(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
+				.scoped(company=False)
 			.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant())
+		rows = await temp.fetch_all(sql)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -131,14 +131,14 @@ class Roles(Common):
 			SQL()
 				.select(cls.table_name)
 				.columns("id", "name", "description")
-				.where("tenant_id = $1")
-				.where("id > $2")
+				.where("id > $1")
+				.scoped(company=False)
 				.order_by("id")
-				.limit("$3")
+				.limit("$2")
 				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), last_id, page_lines + 1)
+		rows = await temp.fetch_all(sql, last_id, page_lines + 1)
 
 		has_more = len(rows) > page_lines
 		rows = rows[:page_lines]
@@ -175,12 +175,12 @@ class Roles(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
 				.where("name = $2")
+				.scoped(company=False)
 			.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), name)
+		row = await temp.fetch_one(sql, name)
 
 		if row is None:
 			return None
