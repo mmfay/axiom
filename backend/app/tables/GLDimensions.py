@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant, get_company
 
 
 @dataclass
@@ -43,16 +42,15 @@ class GLDimensions(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, slot, name, is_active")
-					.values("$1, $2, $3, $4, $5")
+					.fields("slot, name, is_active")
+					.values("$1, $2, $3")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.slot,
 			self.name,
 			self.is_active if self.is_active is not None else True,
@@ -77,18 +75,15 @@ class GLDimensions(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("name = $4, is_active = $5")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("name = $2, is_active = $3")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.id,
 			self.name,
 			self.is_active,
@@ -106,13 +101,12 @@ class GLDimensions(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
 					.where("id = $3")
+					.scoped()
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -126,13 +120,13 @@ class GLDimensions(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.order_by("slot")
-			.getQuery()
+					.where("company_id = $1")
+					.scoped(company=False)
+					.order_by("slot")
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), company_id)
+		rows = await temp.fetch_all(sql, company_id)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -143,13 +137,12 @@ class GLDimensions(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("slot = $3")
-			.getQuery()
+					.where("slot = $1")
+					.scoped()
+				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), slot)
+		row = await temp.fetch_one(sql, slot)
 
 		if row is None:
 			return None

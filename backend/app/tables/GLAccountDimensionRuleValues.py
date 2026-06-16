@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_company, get_tenant
 
 
 @dataclass
@@ -37,18 +36,21 @@ class GLAccountDimensionRuleValues(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, rule_id, value_id")
-					.values("$1, $2, $3, $4")
+					.fields("rule_id, value_id")
+					.values("$1, $2")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), get_company(), self.rule_id, self.value_id)
+		row = await self.fetch_one(sql, self.rule_id, self.value_id)
 
 		if row is None:
 			raise ValueError("Insert Failed: No row returned")
 		
 		self.id = row["id"]
+		self.company_id = row["company_id"]
+		self.tenant_id = row["tenant_id"]
 
 		return self
 
@@ -60,14 +62,13 @@ class GLAccountDimensionRuleValues(Common):
 		sql = (
 			SQL()
 				.delete(self.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("rule_id = $3")
-					.where("value_id = $4")
+					.where("rule_id = $1")
+					.where("value_id = $2")
+					.scoped()
 				.getQuery()
 		)
 
-		await self.execute(sql, get_tenant(), get_company(), self.rule_id, self.value_id)
+		await self.execute(sql, self.rule_id, self.value_id)
 
 	@classmethod
 	async def findByRule(cls, rule_id: int, connection=None) -> list["GLAccountDimensionRuleValues"]:
@@ -76,13 +77,12 @@ class GLAccountDimensionRuleValues(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("rule_id = $3")
-			.getQuery()
+					.where("rule_id = $1")
+					.scoped()
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), get_company(), rule_id)
+		rows = await temp.fetch_all(sql, rule_id)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -97,13 +97,12 @@ class GLAccountDimensionRuleValues(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where_in("rule_id", rule_ids)
-			.getQuery()
+					.where_in("rule_id", rule_ids)
+					.scoped()
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), get_company())
+		rows = await temp.fetch_all(sql)
 
 		return [cls.from_row(row, connection) for row in rows]
 
@@ -115,10 +114,9 @@ class GLAccountDimensionRuleValues(Common):
 		sql = (
 			SQL()
 				.delete(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("rule_id = $3")
+					.where("rule_id = $1")
+					.scoped()
 				.getQuery()
 		)
 
-		await temp.execute(sql, get_tenant(), get_company(), rule_id)
+		await temp.execute(sql, rule_id)

@@ -21,6 +21,7 @@ from .WorkflowDefinitions import WorkflowDefinitions
 from .WorkflowNodes import WorkflowNodes
 from .WorkflowEdges import WorkflowEdges
 from .WorkflowApprovals import WorkflowApprovals
+from .Notifications import Notifications
 
 __all__ = [
 	"Users",
@@ -46,4 +47,5 @@ __all__ = [
 	"WorkflowNodes",
 	"WorkflowEdges",
 	"WorkflowApprovals",
+	"Notifications",
 ]

@@ -2,6 +2,7 @@ from app.tables import WorkflowDefinitions, WorkflowNodes, WorkflowEdges, Workfl
 from app.classes.workflowhandler import WorkflowHandler, _ordered_approval_nodes
 from app.classes.apiresponse import APIResponse
 from app.services.db import db
+from app.services import notifications
 
 DOCUMENT_TYPES: dict[str, str] = {
 	"gl_journal": "General Journal",
@@ -163,8 +164,11 @@ async def submit_workflow(document_type: str, record_id: int):
 
 	handler = WorkflowHandler(document_type, record_id)
 
-	await handler.check_workflow()
 	await handler.update_workflow_status("pending")
+
+	label = DOCUMENT_TYPES[document_type]
+	first_node = handler._approval_nodes[0] if handler._approval_nodes else None
+	await notifications.notify_node_approvers(first_node, document_type, record_id, f"{label} #{record_id} has been submitted for your approval.")
 
 	return APIResponse.ok("Submitted for approval")
 
@@ -173,8 +177,12 @@ async def approve_workflow(document_type: str, record_id: int):
 
 	handler = WorkflowHandler(document_type, record_id)
 
-	await handler.check_workflow()
 	await handler.update_workflow_status("approved")
+
+	next_node = await handler._get_current_node()
+	if next_node:
+		label = DOCUMENT_TYPES[document_type]
+		await notifications.notify_node_approvers(next_node, document_type, record_id, f"{label} #{record_id} is ready for your approval.")
 
 	return APIResponse.ok("Approved")
 
@@ -183,7 +191,6 @@ async def reject_workflow(document_type: str, record_id: int):
 
 	handler = WorkflowHandler(document_type, record_id)
 
-	await handler.check_workflow()
 	await handler.update_workflow_status("rejected")
-	
+
 	return APIResponse.ok("Rejected")

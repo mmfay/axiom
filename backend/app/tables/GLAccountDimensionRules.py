@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant, get_company
 
 
 @dataclass
@@ -43,16 +42,15 @@ class GLAccountDimensionRules(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, account_id, dimension_id, is_required, parent_value_id")
-					.values("$1, $2, $3, $4, $5, $6")
+					.fields("account_id, dimension_id, is_required, parent_value_id")
+					.values("$1, $2, $3, $4")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_one(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.account_id,
 			self.dimension_id,
 			self.is_required if self.is_required is not None else False,
@@ -77,15 +75,14 @@ class GLAccountDimensionRules(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("is_required = $4")
-					.where("tenant_id = $1")
-					.where("compay_id = $2")
-					.where("id = $3")
+					.set("is_required = $2")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
-		row = await self.fetch_one(sql, get_tenant(), get_company(), self.id, self.is_required)
+		row = await self.fetch_one(sql, self.id, self.is_required)
 
 		if row is None:
 			raise ValueError("Update Failed: No row returned")
@@ -100,13 +97,12 @@ class GLAccountDimensionRules(Common):
 		sql = (
 			SQL()
 				.delete(self.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.where("id = $1")
+					.scoped()
 				.getQuery()
 		)
 
-		await self.execute(sql, get_tenant(), get_company(), self.id)
+		await self.execute(sql, self.id)
 
 	@classmethod
 	async def find(cls, id: int, connection=None) -> "GLAccountDimensionRules | None":
@@ -115,13 +111,12 @@ class GLAccountDimensionRules(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("id = $3")
-			.getQuery()
+					.where("id = $1")
+					.scoped()
+				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -136,12 +131,11 @@ class GLAccountDimensionRules(Common):
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("account_id = $3")
-			.getQuery()
+					.where("account_id = $1")
+					.scoped()
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), get_company(), account_id)
+		rows = await temp.fetch_all(sql, account_id)
 
 		return [cls.from_row(row, connection) for row in rows]
