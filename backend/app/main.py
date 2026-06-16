@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.db import db
-from app.routers import auth, users, roles, gl, numbering, workflow
+from app.routers import auth, users, roles, gl, numbering, workflow, notifications
 from app.classes.appexception import AppException
 from app.classes.apiresponse import APIResponse
 
@@ -48,6 +48,7 @@ def create_app() -> FastAPI:
 	app.include_router(gl.router, prefix="/gl", tags=["GL Accounts"])
 	app.include_router(numbering.router, prefix="/numbering", tags=["Numbering"])
 	app.include_router(workflow.router, prefix="/workflows", tags=["Workflows"])
+	app.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
 	@app.get("/health")
 	async def health():

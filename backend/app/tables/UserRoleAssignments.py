@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant
 
 
 @dataclass

@@ -132,6 +132,9 @@ class WorkflowHandler:
 		            stage, records the rejection, and immediately sets the record
 		            to "rejected".
 		"""
+
+		await self.check_workflow()
+
 		if status == "pending":
 			await WorkflowApprovals.delete_for_record(self.document_type, self.document_id)
 			ok = await self._table_cls.update_workflow_status(self.document_id, "pending")

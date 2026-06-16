@@ -2,7 +2,6 @@ from app.tables.Common import Common
 from dataclasses import dataclass
 from typing import Optional
 from app.services.sql import SQL
-from app.services.ctx import get_tenant, get_company
 
 
 @dataclass
@@ -46,16 +45,15 @@ class GLDimensionValues(Common):
 		sql = (
 			SQL()
 				.insert(self.table_name)
-					.fields("tenant_id, company_id, dimension_id, code, name")
-					.values("$1, $2, $3, $4, $5")
+					.fields("dimension_id, code, name")
+					.values("$1, $2, $3")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.dimension_id,
 			self.code,
 			self.name,
@@ -80,18 +78,15 @@ class GLDimensionValues(Common):
 		sql = (
 			SQL()
 				.update(self.table_name)
-					.set("code = $4, name = $5, is_active = $6")
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.set("code = $2, name = $3, is_active = $4")
+					.where("id = $1")
+					.scoped()
 					.returning()
 				.getQuery()
 		)
 
 		row = await self.fetch_returning(
 			sql,
-			get_tenant(),
-			get_company(),
 			self.id,
 			self.code,
 			self.name,
@@ -105,18 +100,18 @@ class GLDimensionValues(Common):
 
 	@classmethod
 	async def find(cls, id: int, connection=None) -> "GLDimensionValues | None":
+		
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-					.where("tenant_id = $1")
-					.where("company_id = $2")
-					.where("id = $3")
+					.where("id = $1")
+					.scoped()
 				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), id)
+		row = await temp.fetch_one(sql, id)
 
 		if row is None:
 			return None
@@ -125,37 +120,37 @@ class GLDimensionValues(Common):
 
 	@classmethod
 	async def findByDimension(cls, dimension_id: int, connection=None) -> list["GLDimensionValues"]:
+
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("dimension_id = $3")
-				.order_by("code")
-			.getQuery()
+					.where("dimension_id = $1")
+					.scoped()
+					.order_by("code")
+				.getQuery()
 		)
 
-		rows = await temp.fetch_all(sql, get_tenant(), get_company(), dimension_id)
+		rows = await temp.fetch_all(sql, dimension_id)
 
 		return [cls.from_row(row, connection) for row in rows]
 
 	@classmethod
 	async def findByCode(cls, dimension_id: int, code: str, connection=None) -> "GLDimensionValues | None":
+
 		temp = cls(connection=connection)
 
 		sql = (
 			SQL()
 				.select(cls.table_name)
-				.where("tenant_id = $1")
-				.where("company_id = $2")
-				.where("dimension_id = $3")
-				.where("code = $4")
-			.getQuery()
+					.where("dimension_id = $1")
+					.where("code = $2")
+					.scoped()
+				.getQuery()
 		)
 
-		row = await temp.fetch_one(sql, get_tenant(), get_company(), dimension_id, code)
+		row = await temp.fetch_one(sql, dimension_id, code)
 
 		if row is None:
 			return None
